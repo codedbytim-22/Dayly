@@ -11,23 +11,23 @@
   --bg-secondary: #13182d;
   --bg-card: #1a1f37;
   --bg-gradient: linear-gradient(135deg, #0a0e17 0%, #13182d 50%, #1a1f37 100%);
-  --bg-pattern:
-    radial-gradient(
-      circle at 20% 80%,
-      rgba(67, 97, 238, 0.1) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(76, 201, 240, 0.08) 0%,
-      transparent 50%
-    ),
-    linear-gradient(
-      45deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.02) 50%,
-      transparent 70%
-    );
+
+  /* Futuristic Grid */
+  --grid-color: rgba(67, 97, 238, 0.07);
+  --grid-size: 40px;
+
+  /* Time-based Ambient Colors */
+  --time-pulse-color: rgba(76, 201, 240, 0.1);
+
+  /* Data Stream Colors */
+  --stream-color: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(76, 201, 240, 0.15),
+    rgba(67, 97, 238, 0.2),
+    rgba(76, 201, 240, 0.15),
+    transparent
+  );
 
   --text-primary: #e2e8f0;
   --text-secondary: #94a3b8;
@@ -87,17 +87,17 @@
   --bg-secondary: #f1f5f9;
   --bg-card: #ffffff;
   --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #ffffff 100%);
-  --bg-pattern:
-    radial-gradient(
-      circle at 20% 80%,
-      rgba(67, 97, 238, 0.05) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(76, 201, 240, 0.05) 0%,
-      transparent 50%
-    );
+
+  --grid-color: rgba(67, 97, 238, 0.03);
+  --time-pulse-color: rgba(67, 97, 238, 0.05);
+  --stream-color: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(67, 97, 238, 0.08),
+    rgba(76, 201, 240, 0.1),
+    rgba(67, 97, 238, 0.08),
+    transparent
+  );
 
   --text-primary: #0f172a;
   --text-secondary: #334155;
@@ -124,7 +124,11 @@
     inset -2px -2px 5px rgba(255, 255, 255, 0.8);
 }
 
-/* Base Styles with Futuristic Background */
+/* ============================================
+   SOPHISTICATED BACKGROUND ANIMATIONS
+   ============================================ */
+
+/* Base Body with Multiple Background Layers */
 body {
   font-family:
     "Inter",
@@ -132,7 +136,18 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  background: var(--bg-gradient), var(--bg-pattern);
+  background: 
+        /* Layer 1: Base gradient */
+    var(--bg-gradient),
+    /* Layer 2: Moving grid */ var(--grid-color),
+    /* Layer 3: Time-based ambient pulse */
+    radial-gradient(
+        circle at 50% 50%,
+        var(--time-pulse-color) 0%,
+        transparent 50%
+      ),
+    /* Layer 4: Base color */ var(--bg-primary);
+
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
@@ -143,45 +158,159 @@ body {
     color var(--transition-normal);
 }
 
-/* Animated Particle Background */
+/* Layer 1: Animated Cyber Grid */
+.grid-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background-image:
+    linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  animation: gridFlow 120s linear infinite;
+  pointer-events: none;
+  z-index: -3;
+  opacity: 0.5;
+}
+
+@keyframes gridFlow {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(
+        calc(var(--grid-size) * -1),
+        calc(var(--grid-size) * -1)
+      )
+      rotate(0.1deg);
+  }
+}
+
+/* Layer 2: Time-Synced Ambient Pulse */
+.time-pulse {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vmax;
+  height: 100vmax;
+  background: radial-gradient(
+    circle at center,
+    var(--time-pulse-color) 0%,
+    transparent 70%
+  );
+  animation: pulseGlow 60s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -2;
+  opacity: 0.3;
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1.02);
+  }
+}
+
+/* Layer 3: Data Streams (Edge-based only) */
+.data-streams {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.data-stream {
+  position: absolute;
+  width: 1px;
+  height: 200%;
+  background: var(--stream-color);
+  top: -100%;
+  animation: dataFlow 20s linear infinite;
+}
+
+.data-stream.left-1 {
+  left: 10%;
+  animation-delay: 0s;
+  animation-duration: 25s;
+}
+.data-stream.left-2 {
+  left: 15%;
+  animation-delay: 5s;
+  animation-duration: 30s;
+}
+.data-stream.right-1 {
+  right: 10%;
+  animation-delay: 2s;
+  animation-duration: 28s;
+}
+.data-stream.right-2 {
+  right: 15%;
+  animation-delay: 7s;
+  animation-duration: 32s;
+}
+
+@keyframes dataFlow {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(50%);
+  }
+}
+
+/* Layer 4: Enhanced Particles */
 .particles {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
   pointer-events: none;
+  z-index: -1;
 }
 
 .particle {
   position: absolute;
-  width: var(--particle-size);
-  height: var(--particle-size);
-  background: var(--accent-color);
   border-radius: 50%;
-  opacity: 0.3;
-  animation: float 20s infinite linear;
+  background: var(--accent-color);
+  opacity: 0;
+  animation: particleFloat 20s infinite linear;
 }
 
-@keyframes float {
+@keyframes particleFloat {
   0% {
     transform: translateY(100vh) translateX(0) rotate(0deg);
     opacity: 0;
   }
   10% {
-    opacity: 0.5;
+    opacity: 0.3;
   }
   90% {
-    opacity: 0.5;
+    opacity: 0.3;
   }
   100% {
-    transform: translateY(-100px) translateX(100px) rotate(360deg);
+    transform: translateY(-100px)
+      translateX(calc(100px * var(--particle-drift, 1))) rotate(360deg);
     opacity: 0;
   }
 }
 
-/* Container */
+/* ============================================
+   MAIN UI COMPONENTS
+   ============================================ */
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -450,12 +579,12 @@ body {
   width: 100%;
 }
 
-/* Card Styles */
+/* Card Styles - Enhanced with subtle glow */
 .datetime-section,
 .progress-section,
 .season-section {
   background: var(--bg-card);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   box-shadow: var(--box-shadow), var(--card-glow);
@@ -480,8 +609,10 @@ body {
 .datetime-section:hover,
 .progress-section:hover,
 .season-section:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--box-shadow-lg), var(--card-glow);
+  transform: translateY(-5px) scale(1.005);
+  box-shadow:
+    var(--box-shadow-lg),
+    0 0 40px rgba(76, 201, 240, 0.2);
 }
 
 /* Date & Time Section */
@@ -791,7 +922,10 @@ body {
   filter: drop-shadow(0 0 3px var(--accent-glow));
 }
 
-/* Responsive Design */
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
 @media (max-width: 768px) {
   .container {
     padding: var(--spacing-sm);
@@ -800,6 +934,17 @@ body {
   .theme-toggle-container {
     top: var(--spacing-md);
     right: var(--spacing-md);
+  }
+
+  /* Reduce animation intensity on mobile */
+  .grid-layer {
+    animation-duration: 240s;
+    opacity: 0.3;
+  }
+
+  .data-stream {
+    width: 0.5px;
+    animation-duration: 40s;
   }
 
   .datetime-section {
@@ -876,9 +1021,18 @@ body {
   .pull-chain {
     height: 50px;
   }
+
+  /* Further reduce animations on very small screens */
+  .time-pulse {
+    animation-duration: 120s;
+    opacity: 0.2;
+  }
 }
 
-/* Animations */
+/* ============================================
+   ANIMATIONS & EFFECTS
+   ============================================ */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -923,4 +1077,37 @@ body {
 
 .light-bulb.on {
   animation: glowPulse 2s infinite;
+}
+
+/* Performance optimization */
+@media (prefers-reduced-motion: reduce) {
+  .grid-layer,
+  .time-pulse,
+  .data-stream,
+  .particle,
+  .light-bulb.on {
+    animation: none !important;
+  }
+
+  .datetime-section:hover,
+  .progress-section:hover,
+  .season-section:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .theme-toggle-container,
+  .grid-layer,
+  .time-pulse,
+  .data-streams,
+  .particles {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
 }

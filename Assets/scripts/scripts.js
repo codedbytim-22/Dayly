@@ -23,16 +23,23 @@ const toggleSwitch = document.querySelector(".toggle-switch");
 
 // App Configuration
 const CONFIG = {
-  VERSION: "1.1.0",
+  VERSION: "1.2.0",
   UPDATE_INTERVAL: 1000,
   PERFORMANCE: {
     THROTTLE_ANIMATIONS: true,
     ANIMATION_DURATION: 800,
+    REDUCED_MOTION: window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches,
   },
   THEME: {
     DARK: "dark",
     LIGHT: "light",
     STORAGE_KEY: "yearProgressTheme",
+  },
+  BACKGROUND: {
+    PARTICLE_COUNT: 50,
+    DATA_STREAMS: 4,
+    GRID_SIZE: 40,
   },
   SEASONS: {
     northern: {
@@ -114,10 +121,156 @@ const CONFIG = {
   },
 };
 
-// Theme Management
-class ThemeManager {
+// ============================================
+// SOPHISTICATED BACKGROUND SYSTEM
+// ============================================
+
+class BackgroundSystem {
   constructor() {
+    this.particles = [];
+    this.isReducedMotion = CONFIG.PERFORMANCE.REDUCED_MOTION;
+    this.init();
+  }
+
+  init() {
+    if (this.isReducedMotion) return;
+
+    this.createGridLayer();
+    this.createTimePulse();
+    this.createDataStreams();
+    this.createParticles();
+  }
+
+  createGridLayer() {
+    const gridLayer = document.createElement("div");
+    gridLayer.className = "grid-layer";
+    document.body.appendChild(gridLayer);
+  }
+
+  createTimePulse() {
+    const timePulse = document.createElement("div");
+    timePulse.className = "time-pulse";
+    document.body.appendChild(timePulse);
+  }
+
+  createDataStreams() {
+    const streamsContainer = document.createElement("div");
+    streamsContainer.className = "data-streams";
+
+    // Create 4 data streams (2 on each side)
+    for (let i = 0; i < CONFIG.BACKGROUND.DATA_STREAMS; i++) {
+      const stream = document.createElement("div");
+      const isLeft = i < 2;
+      const position = i % 2 === 0 ? 1 : 2;
+
+      stream.className = `data-stream ${isLeft ? "left" : "right"}-${position}`;
+      streamsContainer.appendChild(stream);
+    }
+
+    document.body.appendChild(streamsContainer);
+  }
+
+  createParticles() {
+    const particlesContainer = document.createElement("div");
+    particlesContainer.className = "particles";
+    document.body.appendChild(particlesContainer);
+
+    // Calculate optimal particle count based on screen size
+    const particleCount =
+      window.innerWidth < 768
+        ? Math.floor(CONFIG.BACKGROUND.PARTICLE_COUNT / 2)
+        : CONFIG.BACKGROUND.PARTICLE_COUNT;
+
+    for (let i = 0; i < particleCount; i++) {
+      this.createParticle(particlesContainer, i);
+    }
+  }
+
+  createParticle(container, index) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+
+    // Calculate position based on golden ratio for natural distribution
+    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    const angle = (index * 2 * Math.PI) / goldenRatio;
+    const radius = Math.sqrt(index) * 2;
+
+    const x = 50 + radius * Math.cos(angle);
+    const drift = Math.sin(angle) * 2; // Natural drift pattern
+
+    // Size based on distance from center (smaller at edges)
+    const centerDistance = Math.abs(x - 50) / 50;
+    const size = 1 + (1 - centerDistance) * 1.5;
+
+    // Speed based on position (faster near center)
+    const speed = 20 + (1 - centerDistance) * 15;
+
+    // Delayed start for staggered appearance
+    const delay = index * 0.1;
+
+    particle.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}vw;
+            animation-delay: ${delay}s;
+            animation-duration: ${speed}s;
+            --particle-drift: ${drift};
+        `;
+
+    // Store reference
+    this.particles.push({
+      element: particle,
+      x,
+      drift,
+      speed,
+      delay,
+    });
+
+    container.appendChild(particle);
+  }
+
+  updateForTheme(isDark) {
+    // Update particle colors based on theme
+    const particles = document.querySelectorAll(".particle");
+    particles.forEach((particle) => {
+      particle.style.background = isDark
+        ? "rgba(76, 201, 240, 0.3)"
+        : "rgba(67, 97, 238, 0.2)";
+    });
+  }
+
+  updateForPerformance() {
+    // Throttle animations if needed
+    if (window.performance && window.performance.memory) {
+      const usedJSHeapSize = window.performance.memory.usedJSHeapSize;
+      const maxHeapSize = window.performance.memory.jsHeapSizeLimit;
+
+      if (usedJSHeapSize > maxHeapSize * 0.7) {
+        this.throttleAnimations();
+      }
+    }
+  }
+
+  throttleAnimations() {
+    // Reduce animation intensity if memory is high
+    const animations = document.querySelectorAll(".particle, .data-stream");
+    animations.forEach((anim) => {
+      const currentDuration = parseFloat(
+        getComputedStyle(anim).animationDuration,
+      );
+      anim.style.animationDuration = `${currentDuration * 1.5}s`;
+    });
+  }
+}
+
+// ============================================
+// THEME MANAGEMENT
+// ============================================
+
+class ThemeManager {
+  constructor(backgroundSystem) {
     this.currentTheme = this.getPreferredTheme();
+    this.backgroundSystem = backgroundSystem;
     this.init();
   }
 
@@ -127,20 +280,14 @@ class ThemeManager {
       return savedTheme;
     }
 
-    // Check system preference
     return window.matchMedia("(prefers-color-scheme: dark)").matches
       ? CONFIG.THEME.DARK
       : CONFIG.THEME.LIGHT;
   }
 
   init() {
-    // Apply initial theme
     this.setTheme(this.currentTheme);
-
-    // Set up event listeners
     this.setupEventListeners();
-
-    // Watch for system theme changes
     this.watchSystemTheme();
   }
 
@@ -149,8 +296,13 @@ class ThemeManager {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem(CONFIG.THEME.STORAGE_KEY, theme);
 
-    // Update UI elements
-    this.updateUI(theme === CONFIG.THEME.DARK);
+    const isDark = theme === CONFIG.THEME.DARK;
+    this.updateUI(isDark);
+
+    // Update background system
+    if (this.backgroundSystem) {
+      this.backgroundSystem.updateForTheme(isDark);
+    }
   }
 
   toggleTheme() {
@@ -159,24 +311,15 @@ class ThemeManager {
         ? CONFIG.THEME.LIGHT
         : CONFIG.THEME.DARK;
     this.setTheme(newTheme);
-
-    // Trigger pull chain animation
     this.triggerPullChainAnimation();
-
     return newTheme;
   }
 
   updateUI(isDark) {
-    // Update light bulb
     if (lightBulb) {
-      if (isDark) {
-        lightBulb.classList.remove("on");
-      } else {
-        lightBulb.classList.add("on");
-      }
+      lightBulb.classList.toggle("on", !isDark);
     }
 
-    // Update toggle switch
     if (themeToggle) {
       themeToggle.checked = !isDark;
     }
@@ -192,25 +335,16 @@ class ThemeManager {
   }
 
   setupEventListeners() {
-    // Light bulb click
     if (lightBulb) {
-      lightBulb.addEventListener("click", () => {
-        this.toggleTheme();
-      });
+      lightBulb.addEventListener("click", () => this.toggleTheme());
     }
 
-    // Pull chain click
     if (pullChain) {
-      pullChain.addEventListener("click", () => {
-        this.toggleTheme();
-      });
+      pullChain.addEventListener("click", () => this.toggleTheme());
     }
 
-    // Toggle switch change
     if (themeToggle) {
-      themeToggle.addEventListener("change", () => {
-        this.toggleTheme();
-      });
+      themeToggle.addEventListener("change", () => this.toggleTheme());
     }
   }
 
@@ -218,7 +352,6 @@ class ThemeManager {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     mediaQuery.addEventListener("change", (e) => {
-      // Only update if user hasn't set a preference
       if (!localStorage.getItem(CONFIG.THEME.STORAGE_KEY)) {
         this.setTheme(e.matches ? CONFIG.THEME.DARK : CONFIG.THEME.LIGHT);
       }
@@ -226,8 +359,9 @@ class ThemeManager {
   }
 }
 
-// Initialize Theme Manager
-let themeManager;
+// ============================================
+// CORE APP FUNCTIONALITY
+// ============================================
 
 // Utility Functions
 function formatDate(date) {
@@ -399,74 +533,34 @@ function getMonthName(monthIndex) {
   return months[monthIndex];
 }
 
-// Create Particle Background
-function createParticles() {
-  const particlesContainer = document.createElement("div");
-  particlesContainer.className = "particles";
-  document.body.prepend(particlesContainer);
+// ============================================
+// INITIALIZATION
+// ============================================
 
-  const particleCount = 50;
+let backgroundSystem;
+let themeManager;
+let updateInterval;
 
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement("div");
-    particle.className = "particle";
-
-    // Random properties
-    const size = Math.random() * 2 + 1;
-    const x = Math.random() * 100;
-    const delay = Math.random() * 20;
-    const duration = Math.random() * 10 + 20;
-
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    particle.style.left = `${x}vw`;
-    particle.style.animationDelay = `${delay}s`;
-    particle.style.animationDuration = `${duration}s`;
-    particle.style.opacity = Math.random() * 0.5 + 0.1;
-
-    // Color based on theme
-    const isDark = themeManager?.currentTheme === CONFIG.THEME.DARK;
-    particle.style.background = isDark
-      ? "rgba(76, 201, 240, 0.3)"
-      : "rgba(67, 97, 238, 0.2)";
-
-    particlesContainer.appendChild(particle);
-  }
-}
-
-// Toggle Switch Animation
-function animateToggleSwitch() {
-  setTimeout(() => {
-    toggleSwitch.classList.add("visible");
-  }, 1000);
-}
-
-// Initialize App
 function init() {
   console.log(`Year Progress Tracker v${CONFIG.VERSION} initializing...`);
 
-  // Initialize theme manager
-  themeManager = new ThemeManager();
+  // Initialize background system
+  backgroundSystem = new BackgroundSystem();
+
+  // Initialize theme manager with background system
+  themeManager = new ThemeManager(backgroundSystem);
 
   // Set version info
   versionInfo.textContent = `v${CONFIG.VERSION}`;
 
-  // Create particle background
-  createParticles();
-
-  // Set initial progress text
+  // Set initial progress text with percentage
   const now = new Date();
   const initialProgress = calculateProgress(now);
 
-  const staticText = document.createElement("span");
-  staticText.textContent = `${initialProgress.year} is `;
-
-  progressText.textContent = "";
-  progressText.appendChild(staticText);
-  progressText.appendChild(document.createTextNode(" complete"));
+  progressText.textContent = `${initialProgress.year} is ${initialProgress.progress.toFixed(2)}% complete`;
 
   // Set up updates
-  const updateInterval = setInterval(updateDateTime, CONFIG.UPDATE_INTERVAL);
+  updateInterval = setInterval(updateDateTime, CONFIG.UPDATE_INTERVAL);
 
   // Event listeners
   seasonDropdown.addEventListener("change", () => {
@@ -482,12 +576,66 @@ function init() {
   // Initial update
   updateDateTime();
 
+  // Performance monitoring
+  if (process.env.NODE_ENV === "development") {
+    setupPerformanceMonitoring();
+  }
+
   console.log("App initialized successfully");
 
-  return () => clearInterval(updateInterval);
+  // Handle performance updates
+  window.addEventListener("resize", handleResize);
 }
 
-// Service Worker Registration
+function animateToggleSwitch() {
+  setTimeout(() => {
+    if (toggleSwitch) {
+      toggleSwitch.classList.add("visible");
+    }
+  }, 1000);
+}
+
+function handleResize() {
+  // Throttle resize handling
+  clearTimeout(window.resizeTimeout);
+  window.resizeTimeout = setTimeout(() => {
+    if (backgroundSystem) {
+      backgroundSystem.updateForPerformance();
+    }
+  }, 250);
+}
+
+function setupPerformanceMonitoring() {
+  let frameCount = 0;
+  let lastTime = performance.now();
+
+  function checkFPS(currentTime) {
+    frameCount++;
+
+    if (currentTime > lastTime + 1000) {
+      const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+
+      if (fps < 30) {
+        console.warn(`Low FPS: ${fps}. Consider reducing animations.`);
+        if (backgroundSystem) {
+          backgroundSystem.throttleAnimations();
+        }
+      }
+
+      frameCount = 0;
+      lastTime = currentTime;
+    }
+
+    requestAnimationFrame(checkFPS);
+  }
+
+  requestAnimationFrame(checkFPS);
+}
+
+// ============================================
+// SERVICE WORKER & CLEANUP
+// ============================================
+
 function registerServiceWorker() {
   if (
     "serviceWorker" in navigator &&
@@ -505,10 +653,31 @@ function registerServiceWorker() {
   }
 }
 
-// Start the app
+function cleanup() {
+  if (updateInterval) {
+    clearInterval(updateInterval);
+  }
+  window.removeEventListener("resize", handleResize);
+}
+
+// ============================================
+// START THE APP
+// ============================================
+
 document.addEventListener("DOMContentLoaded", () => {
-  const cleanup = init();
+  init();
   registerServiceWorker();
 
   window.addEventListener("beforeunload", cleanup);
 });
+
+// Export for testing if needed
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    calculateProgress,
+    formatDate,
+    formatTime,
+    ThemeManager,
+    BackgroundSystem,
+  };
+}
