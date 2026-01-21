@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Year Progress Tracker - Visualize how far into the year we are"
+    />
+    <title>Year Progress Tracker</title>
+    <link rel="stylesheet" href="Assets/styles/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1 class="app-title">Year Progress</h1>
+        <p class="app-subtitle">Visualize the passage of time</p>
+      </header>
+
+      <main class="main-content">
+        <section class="datetime-section">
+          <div class="date-container">
+            <div class="label">
+              <i class="fas fa-calendar-alt icon"></i>
+              <span>Current Date</span>
+            </div>
+            <div id="dateDisplay" class="value date-display">Loading...</div>
+          </div>
+
+          <div class="time-container">
+            <div class="label">
+              <i class="fas fa-clock icon"></i>
+              <span>Current Time</span>
+            </div>
+            <div id="timeDisplay" class="value time-display">00:00:00</div>
+          </div>
+        </section>
+
+        <section class="progress-section">
+          <h2 class="section-title">Year Progress</h2>
+
+          <div class="progress-info">
+            <div class="year-label" id="yearLabel">2026</div>
+            <div class="percentage-display" id="percentageDisplay">0%</div>
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-background">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+          </div>
+
+          <div class="progress-text" id="progressText">
+            2026 is <span id="percentText">0%</span> complete
+          </div>
+
+          <div class="progress-details">
+            <div class="detail-item">
+              <span class="detail-label">Day of Year:</span>
+              <span class="detail-value" id="dayOfYear">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Days Remaining:</span>
+              <span class="detail-value" id="daysRemaining">-</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Total Days:</span>
+              <span class="detail-value" id="totalDays">-</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="season-section">
+          <h2 class="section-title">
+            <i class="fas fa-globe-americas icon"></i>
+            Seasons
+          </h2>
+
+          <div class="season-controls">
+            <div class="dropdown-container">
+              <label for="seasonDropdown" class="dropdown-label">
+                Select Region
+              </label>
+              <select id="seasonDropdown" class="season-dropdown">
+                <option value="northern">Northern Hemisphere</option>
+                <option value="southern">Southern Hemisphere</option>
+              </select>
+            </div>
+
+            <div class="current-season" id="currentSeason">
+              <div class="season-icon">
+                <i class="fas fa-sun"></i>
+              </div>
+              <div class="season-info">
+                <div class="season-name">
+                  Current Season: <span id="seasonName">Summer</span>
+                </div>
+                <div class="season-dates" id="seasonDates">Dec 21 - Mar 19</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p class="footer-text">
+          Year Progress Tracker •
+          <span id="versionInfo">v1.0.0</span> •
+          <span id="currentYear">2026</span>
+        </p>
+        <p class="footer-note">
+          <i class="fas fa-code"></i>
+          Amilli Labs
+        </p>
+      </footer>
+    </div>
+
+    <script src="Assets/scripts/scripts.js"></script>
+  </body>
+</html>
