@@ -550,6 +550,18 @@ function init() {
   // Initialize theme manager with background system
   themeManager = new ThemeManager(backgroundSystem);
 
+  // Initialize Streak System (only if elements exist)
+  if (document.getElementById("streakCount")) {
+    window.streakSystem = new DailyStreak();
+    console.log("Daily Streak system initialized");
+  }
+
+  // Initialize Goal Tracker (only if elements exist)
+  if (document.getElementById("goalTitle")) {
+    window.goalTracker = new GoalTracker();
+    console.log("Goal Tracker system initialized");
+  }
+
   // Set version info
   versionInfo.textContent = `v${CONFIG.VERSION}`;
 
@@ -558,65 +570,6 @@ function init() {
   const initialProgress = calculateProgress(now);
 
   progressText.textContent = `${initialProgress.year} is ${initialProgress.progress.toFixed(2)}% complete`;
-  function init() {
-    console.log(`Year Progress Tracker v${CONFIG.VERSION} initializing...`);
-
-    // Initialize background system
-    backgroundSystem = new BackgroundSystem();
-
-    // Initialize theme manager with background system
-    themeManager = new ThemeManager(backgroundSystem);
-
-    // ⭐⭐ ADD THESE 3 LINES ⭐⭐
-    // Initialize Streak System (only if elements exist)
-    if (document.getElementById("streakCount")) {
-      window.streakSystem = new DailyStreak();
-      console.log("Daily Streak system initialized");
-    }
-
-    // Initialize Goal Tracker (only if elements exist)
-    if (document.getElementById("goalTitle")) {
-      window.goalTracker = new GoalTracker();
-      console.log("Goal Tracker system initialized");
-    }
-    // ⭐⭐ END OF ADDED CODE ⭐⭐
-
-    // Set version info
-    versionInfo.textContent = `v${CONFIG.VERSION}`;
-
-    // Set initial progress text with percentage
-    const now = new Date();
-    const initialProgress = calculateProgress(now);
-
-    progressText.textContent = `${initialProgress.year} is ${initialProgress.progress.toFixed(2)}% complete`;
-
-    // Set up updates
-    updateInterval = setInterval(updateDateTime, CONFIG.UPDATE_INTERVAL);
-
-    // Event listeners
-    seasonDropdown.addEventListener("change", () => {
-      updateDateTime();
-    });
-
-    // Configure animations
-    progressBar.style.transition = `width ${CONFIG.PERFORMANCE.ANIMATION_DURATION}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
-
-    // Animate toggle switch
-    animateToggleSwitch();
-
-    // Initial update
-    updateDateTime();
-
-    // Performance monitoring
-    if (process.env.NODE_ENV === "development") {
-      setupPerformanceMonitoring();
-    }
-
-    console.log("App initialized successfully");
-
-    // Handle performance updates
-    window.addEventListener("resize", handleResize);
-  }
 
   // Set up updates
   updateInterval = setInterval(updateDateTime, CONFIG.UPDATE_INTERVAL);
@@ -740,7 +693,11 @@ if (typeof module !== "undefined" && module.exports) {
     BackgroundSystem,
   };
 }
-// Daily Streak System
+
+// ============================================
+// DAILY STREAK SYSTEM
+// ============================================
+
 class DailyStreak {
   constructor() {
     this.storageKey = "yearProgress_streak";
@@ -776,7 +733,10 @@ class DailyStreak {
 
   updateDisplay() {
     // Update streak count
-    document.getElementById("streakCount").textContent = this.data.streak;
+    const streakCountEl = document.getElementById("streakCount");
+    if (streakCountEl) {
+      streakCountEl.textContent = this.data.streak;
+    }
 
     // Update message if needed
     this.showWelcomeMessage();
@@ -784,7 +744,7 @@ class DailyStreak {
 
   showWelcomeMessage() {
     const msgEl = document.getElementById("streakMessage");
-    if (this.data.streak === 0) {
+    if (msgEl && this.data.streak === 0) {
       msgEl.textContent =
         "Start your streak today! Come back tomorrow to continue.";
       msgEl.classList.add("show");
@@ -910,6 +870,8 @@ class DailyStreak {
 
   showMessage(text) {
     const msgEl = document.getElementById("streakMessage");
+    if (!msgEl) return;
+
     msgEl.textContent = text;
     msgEl.classList.add("show");
 
@@ -919,7 +881,11 @@ class DailyStreak {
     }, 5000);
   }
 }
-// Goal/Habit System
+
+// ============================================
+// GOAL/HABIT SYSTEM
+// ============================================
+
 class GoalTracker {
   constructor() {
     this.storageKey = "yearProgress_goal";
@@ -973,7 +939,10 @@ class GoalTracker {
     if (!this.data.title) return;
 
     // Update title
-    document.getElementById("goalTitle").textContent = this.data.title;
+    const goalTitleEl = document.getElementById("goalTitle");
+    if (goalTitleEl) {
+      goalTitleEl.textContent = this.data.title;
+    }
 
     // Calculate progress
     const progressPercent =
@@ -981,28 +950,39 @@ class GoalTracker {
     const remainingDays = this.data.totalDays - this.data.progressDays;
 
     // Update progress bar
-    document.getElementById("goalProgressFill").style.width =
-      `${progressPercent}%`;
+    const progressFillEl = document.getElementById("goalProgressFill");
+    if (progressFillEl) {
+      progressFillEl.style.width = `${progressPercent}%`;
+    }
 
     // Update text
-    document.getElementById("progressDays").textContent =
-      this.data.progressDays;
-    document.getElementById("totalDays").textContent = this.data.totalDays;
-    document.getElementById("progressPercent").textContent =
-      `${Math.min(progressPercent, 100).toFixed(1)}%`;
-    document.getElementById("daysRemaining").textContent = remainingDays;
+    const progressDaysEl = document.getElementById("progressDays");
+    const totalDaysEl = document.getElementById("totalDays");
+    const progressPercentEl = document.getElementById("progressPercent");
+    const daysRemainingEl = document.getElementById("daysRemaining");
+
+    if (progressDaysEl) progressDaysEl.textContent = this.data.progressDays;
+    if (totalDaysEl) totalDaysEl.textContent = this.data.totalDays;
+    if (progressPercentEl) {
+      progressPercentEl.textContent = `${Math.min(progressPercent, 100).toFixed(1)}%`;
+    }
+    if (daysRemainingEl) daysRemainingEl.textContent = remainingDays;
 
     // Update dates
     if (this.data.startDate) {
       const start = new Date(this.data.startDate);
-      document.getElementById("startDate").textContent =
-        start.toLocaleDateString();
+      const startDateEl = document.getElementById("startDate");
+      if (startDateEl) {
+        startDateEl.textContent = start.toLocaleDateString();
+      }
 
       // Calculate estimated completion
       const completionDate = new Date(start);
       completionDate.setDate(completionDate.getDate() + this.data.totalDays);
-      document.getElementById("completionDate").textContent =
-        completionDate.toLocaleDateString();
+      const completionDateEl = document.getElementById("completionDate");
+      if (completionDateEl) {
+        completionDateEl.textContent = completionDate.toLocaleDateString();
+      }
     }
 
     // Check for motivational message
@@ -1011,28 +991,40 @@ class GoalTracker {
 
   setupEventListeners() {
     // Edit goal button
-    document.getElementById("editGoalButton").addEventListener("click", () => {
-      this.showGoalSetup();
-    });
+    const editButton = document.getElementById("editGoalButton");
+    if (editButton) {
+      editButton.addEventListener("click", () => {
+        this.showGoalSetup();
+      });
+    }
 
     // Save goal button
-    document.getElementById("saveGoalButton").addEventListener("click", () => {
-      this.saveGoal();
-    });
+    const saveButton = document.getElementById("saveGoalButton");
+    if (saveButton) {
+      saveButton.addEventListener("click", () => {
+        this.saveGoal();
+      });
+    }
 
     // Progress button
-    document.getElementById("progressButton").addEventListener("click", () => {
-      this.recordProgress();
-    });
+    const progressButton = document.getElementById("progressButton");
+    if (progressButton) {
+      progressButton.addEventListener("click", () => {
+        this.recordProgress();
+      });
+    }
 
     // Duration selector
-    document.getElementById("goalDuration").addEventListener("change", (e) => {
-      if (e.target.value === "custom") {
-        document.getElementById("customDuration").style.display = "block";
-      } else {
-        document.getElementById("customDuration").style.display = "none";
-      }
-    });
+    const durationSelect = document.getElementById("goalDuration");
+    if (durationSelect) {
+      durationSelect.addEventListener("change", (e) => {
+        if (e.target.value === "custom") {
+          document.getElementById("customDuration").style.display = "block";
+        } else {
+          document.getElementById("customDuration").style.display = "none";
+        }
+      });
+    }
   }
 
   showGoalSetup() {
@@ -1041,15 +1033,20 @@ class GoalTracker {
 
     // Pre-fill if editing
     if (this.data.title) {
-      document.getElementById("goalInput").value = this.data.title;
-      document.getElementById("goalDuration").value =
-        this.data.totalDays.toString();
+      const goalInput = document.getElementById("goalInput");
+      const goalDuration = document.getElementById("goalDuration");
+      if (goalInput) goalInput.value = this.data.title;
+      if (goalDuration) goalDuration.value = this.data.totalDays.toString();
     }
   }
 
   saveGoal() {
-    const title = document.getElementById("goalInput").value.trim();
-    const durationSelect = document.getElementById("goalDuration").value;
+    const goalInput = document.getElementById("goalInput");
+    const durationSelect = document.getElementById("goalDuration");
+
+    if (!goalInput || !durationSelect) return;
+
+    const title = goalInput.value.trim();
 
     if (!title) {
       this.showMessage("Please enter a goal!", true);
@@ -1057,12 +1054,13 @@ class GoalTracker {
     }
 
     let totalDays;
-    if (durationSelect === "custom") {
-      totalDays = parseInt(document.getElementById("customDays").value) || 90;
+    if (durationSelect.value === "custom") {
+      const customDaysInput = document.getElementById("customDays");
+      totalDays = customDaysInput ? parseInt(customDaysInput.value) || 90 : 90;
       if (totalDays < 7) totalDays = 7;
       if (totalDays > 730) totalDays = 730; // 2 years max
     } else {
-      totalDays = parseInt(durationSelect);
+      totalDays = parseInt(durationSelect.value);
     }
 
     this.data = {
@@ -1111,10 +1109,12 @@ class GoalTracker {
 
     // Button animation
     const button = document.getElementById("progressButton");
-    button.classList.add("check-in-pulse");
-    setTimeout(() => {
-      button.classList.remove("check-in-pulse");
-    }, 500);
+    if (button) {
+      button.classList.add("check-in-pulse");
+      setTimeout(() => {
+        button.classList.remove("check-in-pulse");
+      }, 500);
+    }
 
     // Show success message
     this.showMessage(
@@ -1125,6 +1125,7 @@ class GoalTracker {
 
   checkMotivationalMessage() {
     const msgEl = document.getElementById("motivationalMessage");
+    if (!msgEl) return;
 
     // Weekly check (every 7 days)
     if (this.data.progressDays > 0 && this.data.progressDays % 7 === 0) {
@@ -1161,6 +1162,8 @@ class GoalTracker {
 
   showMessage(text, isError = false) {
     const msgEl = document.getElementById("motivationalMessage");
+    if (!msgEl) return;
+
     msgEl.textContent = text;
     msgEl.style.background = isError
       ? "rgba(255, 107, 107, 0.1)"
