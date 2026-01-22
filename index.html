@@ -116,7 +116,146 @@
             </div>
           </div>
         </section>
+        <!-- Daily Streak Card -->
+        <section class="streak-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-fire"></i>
+              Daily Streak
+            </h2>
+            <div class="streak-display">
+              <span class="streak-count" id="streakCount">0</span>
+              <span class="streak-label">day streak</span>
+            </div>
+          </div>
 
+          <!-- GitHub-style contribution squares -->
+          <div class="streak-grid">
+            <div class="week" id="week1"></div>
+            <div class="week" id="week2"></div>
+            <div class="week" id="week3"></div>
+            <div class="week" id="week4"></div>
+          </div>
+
+          <!-- Legend -->
+          <div class="streak-legend">
+            <div class="legend-item">
+              <div class="legend-box no-checkin"></div>
+              <span>Missed</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box checked-in"></div>
+              <span>Checked In</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box current-streak"></div>
+              <span>Current Streak</span>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button class="streak-button" id="checkInButton">
+            <i class="fas fa-check-circle"></i>
+            I showed up today!
+          </button>
+
+          <div class="streak-message" id="streakMessage"></div>
+        </section>
+        <!-- Goal/Habit Card -->
+        <section class="goal-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-bullseye"></i>
+              My Goal
+            </h2>
+            <button class="edit-goal" id="editGoalButton">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+
+          <!-- Goal Display -->
+          <div class="goal-display" id="goalDisplay">
+            <div class="goal-title" id="goalTitle">No goal set</div>
+            <div class="goal-progress">
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  id="goalProgressFill"
+                  style="width: 0%"
+                ></div>
+              </div>
+              <div class="progress-text">
+                <span id="progressDays">0</span> /
+                <span id="totalDays">0</span> days (<span id="progressPercent"
+                  >0%</span
+                >)
+              </div>
+            </div>
+
+            <div class="goal-details">
+              <div class="detail-item">
+                <i class="fas fa-calendar-check"></i>
+                <span>Started: <span id="startDate">-</span></span>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Remaining: <span id="daysRemaining">-</span> days</span>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Pace: <span id="completionDate">-</span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Goal Setup (hidden by default) -->
+          <div class="goal-setup" id="goalSetup" style="display: none">
+            <h3>Set Your Goal</h3>
+            <div class="setup-form">
+              <input
+                type="text"
+                id="goalInput"
+                placeholder="What do you want to achieve?"
+                maxlength="50"
+              />
+              <div class="duration-selector">
+                <label>Duration:</label>
+                <select id="goalDuration">
+                  <option value="30">30 days</option>
+                  <option value="90" selected>90 days</option>
+                  <option value="180">180 days</option>
+                  <option value="365">1 year</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div
+                class="custom-duration"
+                id="customDuration"
+                style="display: none"
+              >
+                <input
+                  type="number"
+                  id="customDays"
+                  placeholder="Number of days"
+                  min="7"
+                  max="730"
+                />
+              </div>
+              <button class="save-goal" id="saveGoalButton">
+                Start Tracking
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button class="goal-action-button" id="progressButton" disabled>
+            <i class="fas fa-chart-line"></i>
+            Track Progress
+          </button>
+
+          <div class="motivational-message" id="motivationalMessage"></div>
+        </section>
+        <!--Seasons-->
         <section class="season-section">
           <h2 class="section-title">
             <i class="fas fa-globe-americas icon"></i>
@@ -148,7 +287,7 @@
           </div>
         </section>
       </main>
-
+      <!--Footer-->
       <footer class="footer">
         <p class="footer-text">
           Year Progress Tracker •

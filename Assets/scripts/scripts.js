@@ -558,6 +558,65 @@ function init() {
   const initialProgress = calculateProgress(now);
 
   progressText.textContent = `${initialProgress.year} is ${initialProgress.progress.toFixed(2)}% complete`;
+  function init() {
+    console.log(`Year Progress Tracker v${CONFIG.VERSION} initializing...`);
+
+    // Initialize background system
+    backgroundSystem = new BackgroundSystem();
+
+    // Initialize theme manager with background system
+    themeManager = new ThemeManager(backgroundSystem);
+
+    // ⭐⭐ ADD THESE 3 LINES ⭐⭐
+    // Initialize Streak System (only if elements exist)
+    if (document.getElementById("streakCount")) {
+      window.streakSystem = new DailyStreak();
+      console.log("Daily Streak system initialized");
+    }
+
+    // Initialize Goal Tracker (only if elements exist)
+    if (document.getElementById("goalTitle")) {
+      window.goalTracker = new GoalTracker();
+      console.log("Goal Tracker system initialized");
+    }
+    // ⭐⭐ END OF ADDED CODE ⭐⭐
+
+    // Set version info
+    versionInfo.textContent = `v${CONFIG.VERSION}`;
+
+    // Set initial progress text with percentage
+    const now = new Date();
+    const initialProgress = calculateProgress(now);
+
+    progressText.textContent = `${initialProgress.year} is ${initialProgress.progress.toFixed(2)}% complete`;
+
+    // Set up updates
+    updateInterval = setInterval(updateDateTime, CONFIG.UPDATE_INTERVAL);
+
+    // Event listeners
+    seasonDropdown.addEventListener("change", () => {
+      updateDateTime();
+    });
+
+    // Configure animations
+    progressBar.style.transition = `width ${CONFIG.PERFORMANCE.ANIMATION_DURATION}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
+
+    // Animate toggle switch
+    animateToggleSwitch();
+
+    // Initial update
+    updateDateTime();
+
+    // Performance monitoring
+    if (process.env.NODE_ENV === "development") {
+      setupPerformanceMonitoring();
+    }
+
+    console.log("App initialized successfully");
+
+    // Handle performance updates
+    window.addEventListener("resize", handleResize);
+  }
 
   // Set up updates
   updateInterval = setInterval(updateDateTime, CONFIG.UPDATE_INTERVAL);
@@ -680,4 +739,437 @@ if (typeof module !== "undefined" && module.exports) {
     ThemeManager,
     BackgroundSystem,
   };
+}
+// Daily Streak System
+class DailyStreak {
+  constructor() {
+    this.storageKey = "yearProgress_streak";
+    this.data = this.loadData();
+    this.init();
+  }
+
+  loadData() {
+    const defaultData = {
+      streak: 0,
+      lastCheckIn: null,
+      checkIns: {}, // YYYY-MM-DD: level
+      longestStreak: 0,
+    };
+
+    try {
+      const saved = localStorage.getItem(this.storageKey);
+      return saved ? JSON.parse(saved) : defaultData;
+    } catch {
+      return defaultData;
+    }
+  }
+
+  saveData() {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+  }
+
+  init() {
+    this.updateStreakGrid();
+    this.setupCheckInButton();
+    this.updateDisplay();
+  }
+
+  updateDisplay() {
+    // Update streak count
+    document.getElementById("streakCount").textContent = this.data.streak;
+
+    // Update message if needed
+    this.showWelcomeMessage();
+  }
+
+  showWelcomeMessage() {
+    const msgEl = document.getElementById("streakMessage");
+    if (this.data.streak === 0) {
+      msgEl.textContent =
+        "Start your streak today! Come back tomorrow to continue.";
+      msgEl.classList.add("show");
+    }
+  }
+
+  updateStreakGrid() {
+    // Create last 28 days grid (4 weeks)
+    const grid = document.querySelector(".streak-grid");
+    if (!grid) return;
+
+    // Clear existing
+    grid.innerHTML = "";
+
+    const today = new Date();
+    for (let week = 0; week < 4; week++) {
+      const weekDiv = document.createElement("div");
+      weekDiv.className = "week";
+      weekDiv.id = `week${week + 1}`;
+
+      for (let day = 6; day >= 0; day--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - (week * 7 + day));
+
+        const dateStr = this.formatDate(date);
+        const dayBox = document.createElement("div");
+        dayBox.className = "day-box";
+        dayBox.title = date.toLocaleDateString();
+
+        // Check if this date has a check-in
+        if (this.data.checkIns[dateStr]) {
+          const level = this.data.checkIns[dateStr];
+          dayBox.classList.add(`level-${level}`);
+
+          // Add sparkle for today's check-in
+          if (dateStr === this.formatDate(today)) {
+            dayBox.innerHTML = "✨";
+            dayBox.style.background = "transparent";
+          }
+        }
+
+        weekDiv.appendChild(dayBox);
+      }
+      grid.appendChild(weekDiv);
+    }
+  }
+
+  formatDate(date) {
+    return date.toISOString().split("T")[0]; // YYYY-MM-DD
+  }
+
+  setupCheckInButton() {
+    const button = document.getElementById("checkInButton");
+    if (!button) return;
+
+    button.addEventListener("click", () => {
+      this.checkIn();
+    });
+  }
+
+  checkIn() {
+    const today = new Date();
+    const todayStr = this.formatDate(today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = this.formatDate(yesterday);
+
+    // Check if already checked in today
+    if (this.data.checkIns[todayStr]) {
+      this.showMessage("Already checked in today! Come back tomorrow.");
+      return;
+    }
+
+    // Record check-in
+    this.data.checkIns[todayStr] = 1; // Level 1 for now
+
+    // Update streak
+    if (this.data.lastCheckIn === yesterdayStr) {
+      // Consecutive day
+      this.data.streak++;
+      this.showMessage(`🔥 Day ${this.data.streak}! Keep the streak going!`);
+    } else if (!this.data.lastCheckIn) {
+      // First check-in
+      this.data.streak = 1;
+      this.showMessage("🎉 First day! Your streak begins!");
+    } else {
+      // Streak broken
+      if (this.data.streak > 0) {
+        this.showMessage(
+          `💔 Streak broken at ${this.data.streak} days. Starting fresh!`,
+        );
+      }
+      this.data.streak = 1;
+    }
+
+    // Update longest streak
+    if (this.data.streak > this.data.longestStreak) {
+      this.data.longestStreak = this.data.streak;
+    }
+
+    this.data.lastCheckIn = todayStr;
+    this.saveData();
+    this.updateStreakGrid();
+    this.updateDisplay();
+
+    // Button animation
+    const button = document.getElementById("checkInButton");
+    button.innerHTML = '<i class="fas fa-check-circle"></i> Checked In!';
+    button.style.background = "linear-gradient(135deg, #40c463, #30a14e)";
+    button.disabled = true;
+
+    // Re-enable button tomorrow
+    setTimeout(
+      () => {
+        button.innerHTML =
+          '<i class="fas fa-check-circle"></i> I showed up today!';
+        button.style.background = "linear-gradient(135deg, #ff6b6b, #ffa726)";
+        button.disabled = false;
+      },
+      1000 * 60 * 60 * 24,
+    ); // 24 hours
+  }
+
+  showMessage(text) {
+    const msgEl = document.getElementById("streakMessage");
+    msgEl.textContent = text;
+    msgEl.classList.add("show");
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      msgEl.classList.remove("show");
+    }, 5000);
+  }
+}
+// Goal/Habit System
+class GoalTracker {
+  constructor() {
+    this.storageKey = "yearProgress_goal";
+    this.data = this.loadData();
+    this.init();
+  }
+
+  loadData() {
+    const defaultData = {
+      title: "",
+      startDate: null,
+      progressDays: 0,
+      totalDays: 90, // Default 90 days
+      checkIns: {}, // YYYY-MM-DD: true
+      completed: false,
+    };
+
+    try {
+      const saved = localStorage.getItem(this.storageKey);
+      return saved ? JSON.parse(saved) : defaultData;
+    } catch {
+      return defaultData;
+    }
+  }
+
+  saveData() {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+  }
+
+  init() {
+    this.setupUI();
+    this.updateDisplay();
+    this.setupEventListeners();
+  }
+
+  setupUI() {
+    const hasGoal = this.data.title && this.data.startDate;
+
+    if (hasGoal) {
+      document.getElementById("goalDisplay").style.display = "block";
+      document.getElementById("goalSetup").style.display = "none";
+      document.getElementById("progressButton").disabled = false;
+    } else {
+      document.getElementById("goalDisplay").style.display = "none";
+      document.getElementById("goalSetup").style.display = "block";
+      document.getElementById("progressButton").disabled = true;
+    }
+  }
+
+  updateDisplay() {
+    if (!this.data.title) return;
+
+    // Update title
+    document.getElementById("goalTitle").textContent = this.data.title;
+
+    // Calculate progress
+    const progressPercent =
+      (this.data.progressDays / this.data.totalDays) * 100;
+    const remainingDays = this.data.totalDays - this.data.progressDays;
+
+    // Update progress bar
+    document.getElementById("goalProgressFill").style.width =
+      `${progressPercent}%`;
+
+    // Update text
+    document.getElementById("progressDays").textContent =
+      this.data.progressDays;
+    document.getElementById("totalDays").textContent = this.data.totalDays;
+    document.getElementById("progressPercent").textContent =
+      `${Math.min(progressPercent, 100).toFixed(1)}%`;
+    document.getElementById("daysRemaining").textContent = remainingDays;
+
+    // Update dates
+    if (this.data.startDate) {
+      const start = new Date(this.data.startDate);
+      document.getElementById("startDate").textContent =
+        start.toLocaleDateString();
+
+      // Calculate estimated completion
+      const completionDate = new Date(start);
+      completionDate.setDate(completionDate.getDate() + this.data.totalDays);
+      document.getElementById("completionDate").textContent =
+        completionDate.toLocaleDateString();
+    }
+
+    // Check for motivational message
+    this.checkMotivationalMessage();
+  }
+
+  setupEventListeners() {
+    // Edit goal button
+    document.getElementById("editGoalButton").addEventListener("click", () => {
+      this.showGoalSetup();
+    });
+
+    // Save goal button
+    document.getElementById("saveGoalButton").addEventListener("click", () => {
+      this.saveGoal();
+    });
+
+    // Progress button
+    document.getElementById("progressButton").addEventListener("click", () => {
+      this.recordProgress();
+    });
+
+    // Duration selector
+    document.getElementById("goalDuration").addEventListener("change", (e) => {
+      if (e.target.value === "custom") {
+        document.getElementById("customDuration").style.display = "block";
+      } else {
+        document.getElementById("customDuration").style.display = "none";
+      }
+    });
+  }
+
+  showGoalSetup() {
+    document.getElementById("goalDisplay").style.display = "none";
+    document.getElementById("goalSetup").style.display = "block";
+
+    // Pre-fill if editing
+    if (this.data.title) {
+      document.getElementById("goalInput").value = this.data.title;
+      document.getElementById("goalDuration").value =
+        this.data.totalDays.toString();
+    }
+  }
+
+  saveGoal() {
+    const title = document.getElementById("goalInput").value.trim();
+    const durationSelect = document.getElementById("goalDuration").value;
+
+    if (!title) {
+      this.showMessage("Please enter a goal!", true);
+      return;
+    }
+
+    let totalDays;
+    if (durationSelect === "custom") {
+      totalDays = parseInt(document.getElementById("customDays").value) || 90;
+      if (totalDays < 7) totalDays = 7;
+      if (totalDays > 730) totalDays = 730; // 2 years max
+    } else {
+      totalDays = parseInt(durationSelect);
+    }
+
+    this.data = {
+      title: title,
+      startDate: new Date().toISOString().split("T")[0],
+      progressDays: 0,
+      totalDays: totalDays,
+      checkIns: {},
+      completed: false,
+    };
+
+    this.saveData();
+    this.setupUI();
+    this.updateDisplay();
+
+    this.showMessage(
+      `🎯 Goal set! "${title}" for ${totalDays} days. Start tracking!`,
+    );
+  }
+
+  recordProgress() {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+
+    // Check if already recorded today
+    if (this.data.checkIns[todayStr]) {
+      this.showMessage("Already recorded progress today! Great job!", false);
+      return;
+    }
+
+    // Record progress
+    this.data.checkIns[todayStr] = true;
+    this.data.progressDays++;
+
+    // Check if goal completed
+    if (this.data.progressDays >= this.data.totalDays) {
+      this.data.completed = true;
+      this.showMessage(
+        `🎉 CONGRATULATIONS! You completed your goal: "${this.data.title}"!`,
+        false,
+      );
+    }
+
+    this.saveData();
+    this.updateDisplay();
+
+    // Button animation
+    const button = document.getElementById("progressButton");
+    button.classList.add("check-in-pulse");
+    setTimeout(() => {
+      button.classList.remove("check-in-pulse");
+    }, 500);
+
+    // Show success message
+    this.showMessage(
+      `✅ Day ${this.data.progressDays} recorded! Keep going!`,
+      false,
+    );
+  }
+
+  checkMotivationalMessage() {
+    const msgEl = document.getElementById("motivationalMessage");
+
+    // Weekly check (every 7 days)
+    if (this.data.progressDays > 0 && this.data.progressDays % 7 === 0) {
+      const messages = [
+        `🔥 Week ${this.data.progressDays / 7} completed! You're on fire!`,
+        `🎯 ${this.data.progressDays} days down! If you keep this pace, you'll finish by ${this.getCompletionDate()}.`,
+        `💪 Consistency is key! You've shown up ${this.data.progressDays} days in a row.`,
+        `🚀 ${((this.data.progressDays / this.data.totalDays) * 100).toFixed(1)}% to your goal! Keep pushing!`,
+      ];
+
+      const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+      this.showMessage(randomMsg, false);
+    }
+
+    // Milestone messages
+    const milestones = [10, 25, 50, 100];
+    if (milestones.includes(this.data.progressDays)) {
+      this.showMessage(
+        `🏆 ${this.data.progressDays}-day milestone reached! Amazing work!`,
+        false,
+      );
+    }
+  }
+
+  getCompletionDate() {
+    if (!this.data.startDate) return "the future";
+
+    const start = new Date(this.data.startDate);
+    const completion = new Date(start);
+    completion.setDate(completion.getDate() + this.data.totalDays);
+
+    return completion.toLocaleDateString();
+  }
+
+  showMessage(text, isError = false) {
+    const msgEl = document.getElementById("motivationalMessage");
+    msgEl.textContent = text;
+    msgEl.style.background = isError
+      ? "rgba(255, 107, 107, 0.1)"
+      : "rgba(67, 97, 238, 0.1)";
+    msgEl.style.color = isError ? "#ff6b6b" : "var(--accent-color)";
+    msgEl.classList.add("show");
+
+    setTimeout(() => {
+      msgEl.classList.remove("show");
+    }, 5000);
+  }
 }
