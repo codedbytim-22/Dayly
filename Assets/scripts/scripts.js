@@ -1212,6 +1212,268 @@ class EnhancedGoalTracker {
 }
 
 // ============================================
+// FEEDBACK SYSTEM
+// ============================================
+
+class FeedbackSystem {
+  constructor() {
+    this.modal = document.getElementById("feedbackModal");
+    this.form = document.getElementById("feedbackForm");
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.setupFormspreeIntegration();
+  }
+
+  setupEventListeners() {
+    // Open modal
+    const openBtn = document.getElementById("openFeedbackModal");
+    if (openBtn) {
+      openBtn.addEventListener("click", () => this.openModal());
+    }
+
+    // Footer feedback button
+    const footerBtn = document.getElementById("footerFeedbackBtn");
+    if (footerBtn) {
+      footerBtn.addEventListener("click", () => this.openModal());
+    }
+
+    // Close modal
+    const closeBtn = document.getElementById("closeFeedbackModal");
+    const cancelBtn = document.getElementById("cancelFeedback");
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => this.closeModal());
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", () => this.closeModal());
+    }
+
+    // Close on outside click
+    if (this.modal) {
+      this.modal.addEventListener("click", (e) => {
+        if (e.target === this.modal) {
+          this.closeModal();
+        }
+      });
+    }
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.key === "Escape" &&
+        this.modal &&
+        this.modal.classList.contains("active")
+      ) {
+        this.closeModal();
+      }
+    });
+  }
+
+  setupFormspreeIntegration() {
+    if (!this.form) return;
+
+    this.form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Add user data if checkbox is checked
+      const includeData = this.form.querySelector(
+        '[name="include_anonymous_data"]',
+      ).checked;
+      if (includeData) {
+        this.addUserDataToForm();
+      }
+
+      // Show loading state
+      const submitBtn = this.form.querySelector(".submit-btn");
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = "";
+      submitBtn.classList.add("loading");
+      submitBtn.disabled = true;
+
+      try {
+        // Send to Formspree
+        const formData = new FormData(this.form);
+        const response = await fetch(this.form.action, {
+          method: "POST",
+          body: formData,
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (response.ok) {
+          this.showSuccessMessage();
+        } else {
+          throw new Error("Form submission failed");
+        }
+      } catch (error) {
+        console.error("Feedback submission error:", error);
+        this.showErrorMessage();
+      } finally {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.classList.remove("loading");
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  addUserDataToForm() {
+    const userData = {
+      streak: window.enhancedStreakSystem?.data?.streak || 0,
+      longestStreak: window.enhancedStreakSystem?.data?.longestStreak || 0,
+      totalCheckIns: window.enhancedStreakSystem?.data?.totalCheckIns || 0,
+      hasGoal: !!window.enhancedGoalTracker?.data?.title,
+      goalProgress: window.enhancedGoalTracker?.data?.progressDays || 0,
+      goalTotal: window.enhancedGoalTracker?.data?.totalDays || 0,
+      goalCompleted: window.enhancedGoalTracker?.data?.completed || false,
+      currentTheme:
+        document.documentElement.getAttribute("data-theme") || "dark",
+      userAgent: navigator.userAgent.substring(0, 100), // Truncated
+      screenResolution: `${window.screen.width}x${window.screen.height}`,
+      timestamp: new Date().toISOString(),
+    };
+
+    const userDataField = document.getElementById("userData");
+    if (userDataField) {
+      userDataField.value = JSON.stringify(userData);
+    }
+  }
+
+  openModal() {
+    if (this.modal) {
+      this.modal.classList.add("active");
+      document.body.style.overflow = "hidden"; // Prevent scrolling
+
+      // Auto-fill email if previously entered
+      const emailField = document.getElementById("feedbackEmail");
+      const storedEmail = localStorage.getItem("dayly_feedback_email");
+      if (emailField && storedEmail) {
+        emailField.value = storedEmail;
+      }
+
+      // Focus on first input
+      setTimeout(() => {
+        const firstInput = this.modal.querySelector("input, select, textarea");
+        if (firstInput) firstInput.focus();
+      }, 300);
+    }
+  }
+
+  closeModal() {
+    if (this.modal) {
+      this.modal.classList.remove("active");
+      document.body.style.overflow = ""; // Re-enable scrolling
+
+      // Reset form after delay
+      setTimeout(() => {
+        this.resetForm();
+      }, 300);
+    }
+  }
+
+  resetForm() {
+    if (this.form) {
+      this.form.reset();
+
+      // Hide success/error messages
+      const successMsg = this.modal.querySelector(".feedback-success");
+      const errorMsg = this.modal.querySelector(".feedback-error");
+      if (successMsg) successMsg.classList.remove("active");
+      if (errorMsg) errorMsg.classList.remove("active");
+
+      // Show form
+      this.form.style.display = "block";
+    }
+  }
+
+  showSuccessMessage() {
+    // Save email for next time
+    const emailField = document.getElementById("feedbackEmail");
+    if (emailField && emailField.value) {
+      localStorage.setItem("dayly_feedback_email", emailField.value);
+    }
+
+    // Create or show success message
+    let successDiv = this.modal.querySelector(".feedback-success");
+    if (!successDiv) {
+      successDiv = document.createElement("div");
+      successDiv.className = "feedback-success";
+      successDiv.innerHTML = `
+        <div class="success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h3>Thank You!</h3>
+        <p>Your feedback has been received. We truly appreciate you helping us improve DAYLY.</p>
+        <p class="form-note" style="margin-top: 20px;">
+          <i class="fas fa-heart"></i>
+          We'll review your feedback carefully.
+        </p>
+        <button class="submit-btn" style="margin-top: 20px;">
+          <i class="fas fa-times"></i>
+          Close
+        </button>
+      `;
+
+      // Add close event to the new button
+      successDiv
+        .querySelector(".submit-btn")
+        .addEventListener("click", () => this.closeModal());
+
+      this.modal
+        .querySelector(".feedback-modal-content")
+        .appendChild(successDiv);
+    }
+
+    successDiv.classList.add("active");
+    this.form.style.display = "none";
+  }
+
+  showErrorMessage() {
+    // Create or show error message
+    let errorDiv = this.modal.querySelector(".feedback-error");
+    if (!errorDiv) {
+      errorDiv = document.createElement("div");
+      errorDiv.className = "feedback-error";
+      errorDiv.innerHTML = `
+        <div class="error-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3>Something Went Wrong</h3>
+        <p>We couldn't send your feedback. Please try again or contact us directly.</p>
+        <div class="form-buttons" style="margin-top: 20px;">
+          <button class="cancel-btn" id="tryAgainBtn">
+            <i class="fas fa-redo"></i>
+            Try Again
+          </button>
+          <button class="submit-btn" id="closeErrorBtn">
+            <i class="fas fa-times"></i>
+            Close
+          </button>
+        </div>
+      `;
+
+      // Add event listeners to the new buttons
+      errorDiv
+        .querySelector("#tryAgainBtn")
+        .addEventListener("click", () => this.resetForm());
+      errorDiv
+        .querySelector("#closeErrorBtn")
+        .addEventListener("click", () => this.closeModal());
+
+      this.modal.querySelector(".feedback-modal-content").appendChild(errorDiv);
+    }
+
+    errorDiv.classList.add("active");
+    this.form.style.display = "none";
+  }
+}
+
+// ============================================
 // CORE APP FUNCTIONALITY
 // ============================================
 
@@ -1396,6 +1658,9 @@ function enhancedInit() {
   // Initialize enhanced systems
   window.enhancedStreakSystem = new EnhancedDailyStreak();
   window.enhancedGoalTracker = new EnhancedGoalTracker();
+
+  // Initialize feedback system
+  window.feedbackSystem = new FeedbackSystem();
 
   // Set version info
   versionInfo.textContent = `v${CONFIG.VERSION}`;

@@ -308,6 +308,30 @@
       </main>
       <!--Footer-->
       <footer class="footer">
+        <!-- In your footer section, add: -->
+        <footer class="footer">
+          <p class="footer-text">
+            DAYLY Progress Tracker •
+            <span id="versionInfo">v1.3.0</span> •
+            <span id="currentYear">2026</span>
+          </p>
+
+          <!-- Add this feedback prompt -->
+          <div class="feedback-prompt">
+            <p class="feedback-question">
+              <i class="fas fa-comment-medical"></i>
+              Do you have any thoughts, concerns, or requests?
+              <button class="text-link" id="footerFeedbackBtn">
+                We'd love to hear your feedback!
+              </button>
+            </p>
+          </div>
+
+          <p class="footer-note">
+            <i class="fas fa-code"></i>
+            Amilli Labs
+          </p>
+        </footer>
         <p class="footer-text">
           DAYLY Progress Tracker •
           <span id="versionInfo">v1.3.0</span> •
@@ -319,7 +343,122 @@
         </p>
       </footer>
     </div>
+    <!-- Feedback Modal -->
+    <div class="feedback-modal" id="feedbackModal">
+      <div class="feedback-modal-content">
+        <button class="close-modal" id="closeFeedbackModal">&times;</button>
 
+        <div class="feedback-header">
+          <h2><i class="fas fa-comment-alt"></i> Share Your Feedback</h2>
+          <p class="feedback-subtitle">
+            Your thoughts help us improve DAYLY for everyone
+          </p>
+        </div>
+
+        <form
+          class="feedback-form"
+          id="feedbackForm"
+          action="https://formspree.io/f/mnjpwnor"
+          method="POST"
+        >
+          <!-- Hidden fields for context -->
+          <input type="hidden" name="_subject" value="DAYLY Feedback" />
+          <input type="hidden" name="_replyto" id="userEmail" value="" />
+          <input type="hidden" name="app_version" value="1.3.0" />
+          <input type="hidden" name="user_data" id="userData" value="" />
+
+          <div class="form-group">
+            <label for="feedbackType">What type of feedback do you have?</label>
+            <select id="feedbackType" name="feedback_type" required>
+              <option value="" disabled selected>Select a category</option>
+              <option value="feature_request">Feature Request</option>
+              <option value="bug_report">Bug Report</option>
+              <option value="general_feedback">General Feedback</option>
+              <option value="ui_ux">UI/UX Suggestion</option>
+              <option value="performance">Performance Issue</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="feedbackMessage">Your Feedback *</label>
+            <textarea
+              id="feedbackMessage"
+              name="message"
+              placeholder="Tell us what you think, what you'd like to see, or any issues you've encountered..."
+              rows="5"
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="userName">Your Name (Optional)</label>
+            <input
+              type="text"
+              id="userName"
+              name="name"
+              placeholder="How should we call you?"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="feedbackEmail"
+              >Your Email (Optional - for follow-up)</label
+            >
+            <input
+              type="email"
+              id="feedbackEmail"
+              name="email"
+              placeholder="email@example.com"
+            />
+            <small class="email-note"
+              >We'll only use this to respond to your feedback</small
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="allow_contact" checked />
+              <span>It's OK to contact me about this feedback</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="include_anonymous_data" />
+              <span>Include anonymous app data to help debug issues</span>
+              <small class="data-note"
+                >(Streak count, goal progress, no personal info)</small
+              >
+            </label>
+          </div>
+
+          <div class="form-buttons">
+            <button type="button" class="cancel-btn" id="cancelFeedback">
+              Cancel
+            </button>
+            <button type="submit" class="submit-btn">
+              <i class="fas fa-paper-plane"></i>
+              Send Feedback
+            </button>
+          </div>
+
+          <p class="form-note">
+            <i class="fas fa-shield-alt"></i>
+            We respect your privacy. Your feedback will only be used to improve
+            DAYLY.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Feedback Button in Footer -->
+    <div class="feedback-button-container">
+      <button class="feedback-button" id="openFeedbackModal">
+        <i class="fas fa-comment-dots"></i>
+        Give Feedback
+      </button>
+    </div>
     <script src="Assets/scripts/scripts.js"></script>
   </body>
 </html>
