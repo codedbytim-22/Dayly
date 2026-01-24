@@ -7,8 +7,11 @@ const APP_UI = {
   // Initialize UI elements
   initElements() {
     this.elements = {
+      // Date & Time
       dateDisplay: document.getElementById("dateDisplay"),
       timeDisplay: document.getElementById("timeDisplay"),
+
+      // Year Progress
       progressBar: document.getElementById("progressBar"),
       percentageDisplay: document.getElementById("percentageDisplay"),
       progressText: document.getElementById("progressText"),
@@ -17,15 +20,21 @@ const APP_UI = {
       dayOfYear: document.getElementById("dayOfYear"),
       daysRemaining: document.getElementById("daysRemaining"),
       totalDays: document.getElementById("totalDays"),
+      currentYear: document.getElementById("currentYear"),
+      versionInfo: document.getElementById("versionInfo"),
+
+      // Seasons
       seasonDropdown: document.getElementById("seasonDropdown"),
       seasonName: document.getElementById("seasonName"),
       seasonDates: document.getElementById("seasonDates"),
-      currentYear: document.getElementById("currentYear"),
-      versionInfo: document.getElementById("versionInfo"),
+
+      // Streak Card
       streakCount: document.getElementById("streakCount"),
       streakGrid: document.querySelector(".streak-grid"),
       streakMessage: document.getElementById("streakMessage"),
       checkInButton: document.getElementById("checkInButton"),
+
+      // Goal Card
       goalTitle: document.getElementById("goalTitle"),
       goalProgressFill: document.getElementById("goalProgressFill"),
       progressDays: document.querySelector("#goalDisplay #progressDays"),
@@ -45,6 +54,12 @@ const APP_UI = {
       progressButton: document.getElementById("progressButton"),
       editGoalButton: document.getElementById("editGoalButton"),
     };
+
+    console.log(
+      "UI Elements initialized:",
+      Object.keys(this.elements).length,
+      "elements found",
+    );
   },
 
   // Update date and time display
@@ -88,9 +103,38 @@ const APP_UI = {
     }
   },
 
+  // Get month name for season display
+  getMonthName(monthIndex) {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return months[monthIndex];
+  },
+
   // Update season display
   updateSeason(date, hemisphere) {
     const season = APP_LOGIC.getCurrentSeason(date, hemisphere);
+
+    if (!season) {
+      console.error(
+        "No season found for date:",
+        date,
+        "hemisphere:",
+        hemisphere,
+      );
+      return;
+    }
 
     if (this.elements.seasonName) {
       this.elements.seasonName.textContent = season.name;
@@ -98,38 +142,46 @@ const APP_UI = {
     }
 
     if (this.elements.seasonDates) {
-      const months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      const startMonthName = months[season.startMonth - 1];
-      const endMonthName = months[season.endMonth - 1];
+      const startMonthName = this.getMonthName(season.startMonth - 1);
+      const endMonthName = this.getMonthName(season.endMonth - 1);
       this.elements.seasonDates.textContent = `${startMonthName} ${season.startDay} - ${endMonthName} ${season.endDay}`;
+    }
+
+    // Update season icon
+    const seasonIcon = document.querySelector(".season-icon i");
+    if (seasonIcon && season.icon) {
+      // Clear existing classes
+      seasonIcon.className = "";
+
+      // Add icon classes from season config
+      const iconClasses = season.icon.split(" ");
+      iconClasses.forEach((cls) => {
+        if (cls) seasonIcon.classList.add(cls);
+      });
+
+      seasonIcon.style.color = season.color;
     }
   },
 
-  // Update streak display
+  // Update streak display - FIXED: Immediate streak count update
   updateStreakDisplay() {
+    console.log("UI: Updating streak display, count =", APP_STATE.streak.count);
+
     if (this.elements.streakCount) {
       this.elements.streakCount.textContent = APP_STATE.streak.count;
     }
+
     this.updateStreakGrid();
   },
 
   // Update streak grid (GitHub-style)
   updateStreakGrid() {
-    if (!this.elements.streakGrid) return;
+    if (!this.elements.streakGrid) {
+      console.error("Streak grid element not found!");
+      return;
+    }
 
+    // Clear existing
     this.elements.streakGrid.innerHTML = "";
 
     const today = new Date();
@@ -167,7 +219,7 @@ const APP_UI = {
 
   // Update goal display
   updateGoalDisplay() {
-    if (!APP_STATE.goal.title) {
+    if (!APP_STATE.goal.title || !APP_STATE.goal.startDate) {
       this.showGoalSetup();
       return;
     }
@@ -228,6 +280,17 @@ const APP_UI = {
       if (this.elements.progressButton) {
         this.elements.progressButton.disabled = true;
       }
+
+      // Pre-fill if editing
+      if (APP_STATE.goal.title) {
+        if (this.elements.goalInput) {
+          this.elements.goalInput.value = APP_STATE.goal.title;
+        }
+        if (this.elements.goalDuration) {
+          this.elements.goalDuration.value =
+            APP_STATE.goal.totalDays.toString();
+        }
+      }
     }
   },
 
@@ -244,20 +307,30 @@ const APP_UI = {
 
   // Show message in streak card
   showStreakMessage(text, duration = 5000) {
-    if (!this.elements.streakMessage) return;
+    if (!this.elements.streakMessage) {
+      console.error("Streak message element not found!");
+      return;
+    }
 
+    console.log("Showing streak message:", text);
     this.elements.streakMessage.textContent = text;
     this.elements.streakMessage.classList.add("show");
 
     setTimeout(() => {
-      this.elements.streakMessage.classList.remove("show");
+      if (this.elements.streakMessage) {
+        this.elements.streakMessage.classList.remove("show");
+      }
     }, duration);
   },
 
   // Show message in goal card
   showGoalMessage(text, isError = false, duration = 5000) {
-    if (!this.elements.motivationalMessage) return;
+    if (!this.elements.motivationalMessage) {
+      console.error("Motivational message element not found!");
+      return;
+    }
 
+    console.log("Showing goal message:", text);
     this.elements.motivationalMessage.textContent = text;
     this.elements.motivationalMessage.style.background = isError
       ? "rgba(255, 107, 107, 0.1)"
@@ -268,20 +341,33 @@ const APP_UI = {
     this.elements.motivationalMessage.classList.add("show");
 
     setTimeout(() => {
-      this.elements.motivationalMessage.classList.remove("show");
+      if (this.elements.motivationalMessage) {
+        this.elements.motivationalMessage.classList.remove("show");
+      }
     }, duration);
   },
 
-  // Update check-in button state
+  // Update check-in button state - FIXED: Shows "Showed up today!" when checked in
   updateCheckInButton() {
-    if (!this.elements.checkInButton) return;
+    if (!this.elements.checkInButton) {
+      console.error("Check-in button not found!");
+      return;
+    }
 
     const today = APP_STATE.getToday();
     const isCheckedIn = !!APP_STATE.streak.checkIns[today];
 
+    console.log(
+      "Updating check-in button. Today:",
+      today,
+      "Checked in:",
+      isCheckedIn,
+    );
+
     if (isCheckedIn) {
+      // ✅ Shows "Showed up today!" when checked in
       this.elements.checkInButton.innerHTML =
-        '<i class="fas fa-check-circle"></i> Checked In!';
+        '<i class="fas fa-check-circle"></i> Showed up today!';
       this.elements.checkInButton.style.background =
         "linear-gradient(135deg, #40c463, #30a14e)";
       this.elements.checkInButton.disabled = true;
@@ -292,6 +378,16 @@ const APP_UI = {
         "linear-gradient(135deg, #ff6b6b, #ffa726)";
       this.elements.checkInButton.disabled = false;
     }
+  },
+
+  // Animate check-in button
+  animateCheckInButton() {
+    if (!this.elements.checkInButton) return;
+
+    this.elements.checkInButton.classList.add("check-in-pulse");
+    setTimeout(() => {
+      this.elements.checkInButton.classList.remove("check-in-pulse");
+    }, 500);
   },
 
   // Show welcome message for new users

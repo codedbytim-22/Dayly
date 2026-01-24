@@ -116,6 +116,7 @@ const YearProgressApp = {
     this.updateAllDisplays();
     APP_UI.updateCheckInButton();
     APP_UI.updateGoalDisplay();
+    APP_UI.updateStreakDisplay(); // ADDED: Initialize streak display
     APP_UI.showWelcomeMessage();
 
     // Start update interval
@@ -172,22 +173,36 @@ const YearProgressApp = {
     }
   },
 
-  // Handle check-in
+  // Handle check-in - FIXED: Immediate updates and better button text
   handleCheckIn() {
+    console.log("Handling check-in...");
+
     const result = APP_LOGIC.processStreakCheckIn();
 
     if (result.success) {
-      APP_UI.showStreakMessage(result.message);
+      console.log("Check-in successful, new streak:", result.streak);
+
+      // ✅ FIXED: Update streak count IMMEDIATELY
       APP_UI.updateStreakDisplay();
+
+      // ✅ FIXED: Update button text to "Showed up today!"
       APP_UI.updateCheckInButton();
 
-      // Animate button
+      // ✅ FIXED: Show success message
+      APP_UI.showStreakMessage(result.message);
+
+      // ✅ FIXED: Animate button
       if (APP_UI.elements.checkInButton) {
         APP_UI.elements.checkInButton.classList.add("check-in-pulse");
         setTimeout(() => {
           APP_UI.elements.checkInButton.classList.remove("check-in-pulse");
         }, 500);
       }
+
+      console.log(
+        "UI updated, streak count should now be:",
+        APP_STATE.streak.count,
+      );
     } else {
       APP_UI.showStreakMessage(result.message);
     }
