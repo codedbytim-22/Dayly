@@ -39,7 +39,7 @@
     0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --light-progress-bg: rgba(226, 232, 240, 0.8);
-  --light-progress-fill: linear-gradient(90deg, #3b82f6, #60a5fa);
+  --light-progress-fill: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
   --light-glow-effect: rgba(147, 197, 253, 0.1);
 
   /* Dark Theme Variables */
@@ -82,7 +82,7 @@
     0 10px 30px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --dark-progress-bg: rgba(51, 65, 85, 0.8);
-  --dark-progress-fill: linear-gradient(90deg, #60a5fa, #38bdf8);
+  --dark-progress-fill: linear-gradient(90deg, #60a5fa, #38bdf8, #7dd3fc);
   --dark-glow-effect: rgba(96, 165, 250, 0.15);
 
   /* Common */
@@ -113,7 +113,7 @@ body {
     color var(--transition-speed) var(--transition-timing);
   overflow-x: hidden;
   position: relative;
-  animation: gradientShift 30s ease infinite;
+  animation: gradientShift 35s ease infinite;
 }
 
 @keyframes gradientShift {
@@ -147,7 +147,7 @@ body::after {
 body.light-mode::before {
   background: var(--light-bg-pattern);
   opacity: 1;
-  animation: patternFloat 60s ease-in-out infinite;
+  animation: patternFloat 50s ease-in-out infinite;
 }
 
 body.light-mode::after {
@@ -170,7 +170,7 @@ body.light-mode::after {
 body.dark-mode::before {
   background: var(--dark-bg-pattern);
   opacity: 1;
-  animation: patternFloat 80s ease-in-out infinite;
+  animation: patternFloat 65s ease-in-out infinite;
 }
 
 body.dark-mode::after {
@@ -195,13 +195,17 @@ body.dark-mode::after {
     transform: translate(0, 0) scale(1);
     background-position: 0% 0%;
   }
-  33% {
+  25% {
     transform: translate(1%, 1%) scale(1.02);
+    background-position: 25% 25%;
+  }
+  50% {
+    transform: translate(-1%, 0) scale(0.98);
     background-position: 50% 50%;
   }
-  66% {
-    transform: translate(-1%, -1%) scale(0.98);
-    background-position: 100% 100%;
+  75% {
+    transform: translate(0, -1%) scale(1.01);
+    background-position: 75% 75%;
   }
 }
 
@@ -216,7 +220,7 @@ body.dark-mode::after {
 }
 
 /* Animated Particles/Stars Container */
-.background-animations {
+.particle-system {
   position: fixed;
   top: 0;
   left: 0;
@@ -232,8 +236,31 @@ body.dark-mode::after {
   border-radius: 50%;
   background: var(--particle-color);
   opacity: 0;
+  filter: blur(var(--blur, 2px));
   animation: particleFloat var(--duration) ease-in-out infinite;
   animation-delay: var(--delay);
+}
+
+@keyframes particleFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0.3);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(var(--move-x), var(--move-y)) scale(0.8);
+    opacity: var(--opacity);
+  }
+  50% {
+    transform: translate(calc(var(--move-x) * 0.5), calc(var(--move-y) * 0.5))
+      scale(1);
+    opacity: var(--opacity);
+  }
+  80% {
+    transform: translate(calc(var(--move-x) * 0.2), calc(var(--move-y) * 0.2))
+      scale(0.8);
+    opacity: calc(var(--opacity) * 0.5);
+  }
 }
 
 .star {
@@ -244,31 +271,34 @@ body.dark-mode::after {
   animation: starTwinkle var(--duration) ease-in-out infinite;
   animation-delay: var(--delay);
   box-shadow: 0 0 var(--size) var(--star-color);
-}
-
-@keyframes particleFloat {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(0.5);
-    opacity: 0;
-  }
-  50% {
-    transform: translate(var(--move-x), var(--move-y)) scale(1);
-    opacity: var(--opacity);
-  }
+  filter: drop-shadow(0 0 2px var(--star-color));
 }
 
 @keyframes starTwinkle {
   0%,
   100% {
     opacity: 0;
-    transform: scale(0.5);
-    box-shadow: 0 0 calc(var(--size) * 0.5) var(--star-color);
+    transform: scale(0.3);
+    box-shadow: 0 0 calc(var(--size) * 0.3) var(--star-color);
+    filter: drop-shadow(0 0 1px var(--star-color));
+  }
+  20% {
+    opacity: 0.3;
+    transform: scale(0.6);
+    box-shadow: 0 0 calc(var(--size) * 0.6) var(--star-color);
+    filter: drop-shadow(0 0 3px var(--star-color));
   }
   50% {
     opacity: 1;
     transform: scale(1);
     box-shadow: 0 0 var(--size) var(--star-color);
+    filter: drop-shadow(0 0 5px var(--star-color));
+  }
+  80% {
+    opacity: 0.5;
+    transform: scale(0.7);
+    box-shadow: 0 0 calc(var(--size) * 0.7) var(--star-color);
+    filter: drop-shadow(0 0 2px var(--star-color));
   }
 }
 
@@ -385,7 +415,7 @@ body.dark-mode {
   opacity: 1;
 }
 
-/* Sun Animation */
+/* Enhanced Sun Animation */
 .sun-rays {
   position: absolute;
   width: 100%;
@@ -398,32 +428,77 @@ body.dark-mode {
   top: 50%;
   left: 50%;
   width: 2px;
-  height: 15px;
-  background: #f59e0b;
+  height: var(--length, 15px);
+  background: linear-gradient(to bottom, #f59e0b, #fbbf24);
   border-radius: 1px;
   transform-origin: 50% 100%;
+  opacity: 0;
 }
 
 .sun-animation .sun-rays {
-  animation: sunRays 1.5s ease-out;
+  animation: sunRaysFade 1.5s ease-out forwards;
 }
 
-@keyframes sunRays {
+.sun-animation .sun-ray {
+  animation: rayExpand 1.5s ease-out var(--delay) forwards;
+}
+
+@keyframes sunRaysFade {
   0% {
     opacity: 0;
-    transform: scale(0.5);
   }
   50% {
-    opacity: 0.8;
-    transform: scale(1.2);
+    opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: scale(1.5);
   }
 }
 
-/* Moon Stars Animation */
+@keyframes rayExpand {
+  0% {
+    transform: translate(-50%, -100%) rotate(var(--rot)) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -100%) rotate(var(--rot)) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -100%) rotate(var(--rot)) scale(1);
+    opacity: 0.4;
+  }
+}
+
+.sun-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(245, 158, 11, 0.3) 0%,
+    transparent 70%
+  );
+  animation: glowPulseFast 2s ease-out;
+}
+
+@keyframes glowPulseFast {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Enhanced Moon Stars Animation */
 .stars-container {
   position: absolute;
   width: 100%;
@@ -431,21 +506,8 @@ body.dark-mode {
   opacity: 0;
 }
 
-.star {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: white;
-  border-radius: 50%;
-  opacity: 0;
-}
-
 .moon-stars-animation .stars-container {
-  animation: starsFade 2s ease-out;
-}
-
-.moon-stars-animation .star {
-  animation: starFloat 1.5s ease-out forwards;
+  animation: starsFade 2s ease-out forwards;
 }
 
 @keyframes starsFade {
@@ -458,16 +520,30 @@ body.dark-mode {
   }
 }
 
-@keyframes starFloat {
+.moon-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(203, 213, 225, 0.2) 0%,
+    transparent 70%
+  );
+  animation: moonGlow 2s ease-out;
+}
+
+@keyframes moonGlow {
   0% {
-    transform: translate(0, 0) scale(0);
+    transform: scale(0.8);
     opacity: 0;
   }
   50% {
-    opacity: 1;
+    transform: scale(1.2);
+    opacity: 0.4;
   }
   100% {
-    transform: translate(var(--tx), var(--ty)) scale(1);
+    transform: scale(1);
     opacity: 0;
   }
 }
@@ -513,15 +589,15 @@ body.dark-mode {
 
 .datetime-card {
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px) saturate(180%);
   border-radius: var(--card-border-radius);
   padding: 2rem;
   box-shadow: var(--card-shadow);
   flex: 1;
   min-width: 250px;
   max-width: 300px;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   overflow: hidden;
 }
@@ -534,11 +610,15 @@ body.dark-mode {
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
 }
 
 .datetime-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 0 30px var(--accent-glow);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 .card-label {
@@ -566,19 +646,20 @@ body.dark-mode {
   text-shadow: 0 0 10px var(--accent-glow);
 }
 
-/* Progress Section */
+/* Enhanced Progress Section */
 .progress-container {
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px) saturate(180%);
   border-radius: var(--card-border-radius);
   padding: 2.5rem;
   box-shadow: var(--card-shadow);
   width: 100%;
   max-width: 800px;
   margin-bottom: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .progress-container::before {
@@ -589,6 +670,15 @@ body.dark-mode {
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
+}
+
+.progress-container:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 0 30px var(--accent-glow);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 .progress-header {
@@ -623,17 +713,39 @@ body.dark-mode {
   position: relative;
 }
 
+/* Enhanced Progress Bar with Shimmer */
 .progress-bar {
+  position: relative;
   height: 100%;
   background: var(--progress-fill);
   border-radius: 10px;
   width: 0%;
-  transition: width 0.8s var(--transition-timing);
-  position: relative;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 20px var(--accent-glow);
 }
 
+/* Shimmer effect */
 .progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Color transition effect */
+.progress-bar::before {
   content: "";
   position: absolute;
   top: 0;
@@ -642,19 +754,30 @@ body.dark-mode {
   bottom: 0;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
   );
-  animation: shimmer 2s infinite;
+  opacity: 0;
+  animation: colorPulse 4s ease-in-out infinite;
 }
 
 @keyframes shimmer {
   0% {
-    transform: translateX(-100%);
+    left: -100%;
   }
   100% {
-    transform: translateX(100%);
+    left: 200%;
+  }
+}
+
+@keyframes colorPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
   }
 }
 
@@ -725,7 +848,100 @@ body.dark-mode {
   text-shadow: 0 0 5px var(--accent-glow);
 }
 
-/* Responsive Design */
+/* Ultra-Small Screen Responsiveness */
+@media (max-width: 360px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    line-height: 1.3;
+  }
+
+  .datetime-card {
+    padding: 1rem;
+    min-width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .date-display {
+    font-size: 1.3rem;
+  }
+
+  .time-display {
+    font-size: 1.8rem;
+  }
+
+  .progress-container {
+    padding: 1rem;
+  }
+
+  .progress-title {
+    font-size: 1.2rem;
+  }
+
+  .progress-percent {
+    font-size: 1.5rem;
+  }
+
+  .progress-text {
+    font-size: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .theme-toggle {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .toggle-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 1rem;
+  }
+
+  body {
+    animation-duration: 60s;
+  }
+
+  .particle-system {
+    display: none;
+  }
+}
+
+/* Small Devices (Phones, 361px - 480px) */
+@media (min-width: 361px) and (max-width: 480px) {
+  .title {
+    font-size: 1.7rem;
+  }
+
+  .date-display {
+    font-size: 1.5rem;
+  }
+
+  .time-display {
+    font-size: 2rem;
+  }
+
+  .progress-percent {
+    font-size: 1.8rem;
+  }
+}
+
+/* Medium Devices (Tablets, 768px and below) */
 @media (max-width: 768px) {
   .container {
     padding: 1.5rem;
@@ -777,42 +993,105 @@ body.dark-mode {
     width: 100%;
   }
 
-  /* Reduce animation intensity on mobile */
   body {
     animation: gradientShift 60s ease infinite;
   }
 }
 
-@media (max-width: 480px) {
-  .title {
-    font-size: 1.8rem;
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .datetime-card,
+  .toggle-btn {
+    transition: none;
   }
 
-  .date-display {
-    font-size: 1.6rem;
+  .datetime-card:active {
+    transform: scale(0.98);
   }
 
-  .time-display {
-    font-size: 2rem;
-  }
-
-  .progress-percent {
-    font-size: 1.8rem;
+  .toggle-btn {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
-/* Performance optimization */
+/* Performance optimization for reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   body,
-  body::before,
-  body::after,
+  .progress-bar,
   .particle,
   .star,
-  .progress-bar::after {
+  .sun-ray,
+  .sun-animation,
+  .moon-stars-animation {
     animation: none !important;
   }
 
   .progress-bar {
     transition: width 0.5s ease;
+  }
+
+  .datetime-card:hover,
+  .toggle-btn:hover,
+  .progress-container:hover {
+    transform: none;
+  }
+
+  .particle-system,
+  .sun-rays,
+  .stars-container {
+    display: none !important;
+  }
+
+  body.light-mode {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  body.dark-mode {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .particle,
+  .star {
+    display: none;
+  }
+
+  body::before,
+  body::after {
+    opacity: 0.1;
+  }
+}
+
+/* Offline indicator */
+body.offline::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+  z-index: 9999;
+  animation: offlinePulse 2s ease-in-out infinite;
+}
+
+@keyframes offlinePulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
   }
 }
