@@ -1,21 +1,22 @@
 {
-  "name": "DAYLY Progress Tracker",
-  "short_name": "DAYLY",
-  "description": "Visualize time and track daily progress with streaks and goals",
-  "start_url": "/",
+  "name": "Year Progress Tracker",
+  "short_name": "YearProgress",
+  "description": "Visualize the passage of time with a beautiful year progress tracker",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#4361ee",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%234361ee%22>📅</text></svg>",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
-  ],
-  "categories": ["productivity", "utilities", "health", "lifestyle"],
-  "lang": "en",
-  "orientation": "portrait-primary",
-  "scope": "/"
+  ]
 }

@@ -1,0 +1,586 @@
+:root {
+  /* Light Theme Variables */
+  --light-bg: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+  --light-bg-pattern:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(91, 173, 254, 0.05) 0%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(0, 209, 255, 0.05) 0%,
+      transparent 20%
+    );
+  --light-primary: #1a1a2e;
+  --light-secondary: #2d3748;
+  --light-accent: #3b82f6;
+  --light-accent-glow: rgba(59, 130, 246, 0.3);
+  --light-card-bg: rgba(255, 255, 255, 0.92);
+  --light-card-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  --light-progress-bg: rgba(226, 232, 240, 0.8);
+  --light-progress-fill: linear-gradient(90deg, #3b82f6, #60a5fa);
+
+  /* Dark Theme Variables */
+  --dark-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --dark-bg-pattern:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(59, 130, 246, 0.08) 0%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(124, 58, 237, 0.08) 0%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.02) 0%,
+      transparent 50%
+    );
+  --dark-primary: #f8fafc;
+  --dark-secondary: #cbd5e1;
+  --dark-accent: #60a5fa;
+  --dark-accent-glow: rgba(96, 165, 250, 0.4);
+  --dark-card-bg: rgba(30, 41, 59, 0.7);
+  --dark-card-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --dark-progress-bg: rgba(51, 65, 85, 0.8);
+  --dark-progress-fill: linear-gradient(90deg, #60a5fa, #38bdf8);
+
+  /* Common */
+  --card-border-radius: 20px;
+  --transition-speed: 0.4s;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  min-height: 100vh;
+  background: var(--bg);
+  background-attachment: fixed;
+  color: var(--primary);
+  transition:
+    background var(--transition-speed) var(--transition-timing),
+    color var(--transition-speed) var(--transition-timing);
+  overflow-x: hidden;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-pattern);
+  z-index: -1;
+  pointer-events: none;
+}
+
+body.light-mode {
+  --bg: var(--light-bg);
+  --bg-pattern: var(--light-bg-pattern);
+  --primary: var(--light-primary);
+  --secondary: var(--light-secondary);
+  --accent: var(--light-accent);
+  --accent-glow: var(--light-accent-glow);
+  --card-bg: var(--light-card-bg);
+  --card-shadow: var(--light-card-shadow);
+  --progress-bg: var(--light-progress-bg);
+  --progress-fill: var(--light-progress-fill);
+}
+
+body.dark-mode {
+  --bg: var(--dark-bg);
+  --bg-pattern: var(--dark-bg-pattern);
+  --primary: var(--dark-primary);
+  --secondary: var(--dark-secondary);
+  --accent: var(--dark-accent);
+  --accent-glow: var(--dark-accent-glow);
+  --card-bg: var(--dark-card-bg);
+  --card-shadow: var(--dark-card-shadow);
+  --progress-bg: var(--dark-progress-bg);
+  --progress-fill: var(--dark-progress-fill);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+.toggle-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border: none;
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--primary);
+  transition: all var(--transition-speed) var(--transition-timing);
+  position: relative;
+  overflow: hidden;
+}
+
+.toggle-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.toggle-btn i {
+  position: absolute;
+  transition:
+    transform var(--transition-speed) var(--transition-timing),
+    opacity var(--transition-speed) var(--transition-timing);
+}
+
+.sun-icon {
+  color: #f59e0b;
+}
+
+.moon-icon {
+  color: #cbd5e1;
+}
+
+/* Light mode - sun visible, moon hidden */
+.light-mode .sun-icon {
+  transform: translateY(0) rotate(0deg);
+  opacity: 1;
+}
+
+.light-mode .moon-icon {
+  transform: translateY(20px) rotate(-90deg);
+  opacity: 0;
+}
+
+/* Dark mode - moon visible, sun hidden */
+.dark-mode .sun-icon {
+  transform: translateY(-20px) rotate(90deg);
+  opacity: 0;
+}
+
+.dark-mode .moon-icon {
+  transform: translateY(0) rotate(0deg);
+  opacity: 1;
+}
+
+/* Sun Animation */
+.sun-rays {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.sun-ray {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 15px;
+  background: #f59e0b;
+  border-radius: 1px;
+  transform-origin: 50% 100%;
+}
+
+.sun-animation .sun-rays {
+  animation: sunRays 1.5s ease-out;
+}
+
+@keyframes sunRays {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* Moon Stars Animation */
+.stars-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.moon-stars-animation .stars-container {
+  animation: starsFade 2s ease-out;
+}
+
+.moon-stars-animation .star {
+  animation: starFloat 1.5s ease-out forwards;
+}
+
+@keyframes starsFade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes starFloat {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  width: 100%;
+}
+
+.title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--secondary);
+  font-weight: 400;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Date & Time Cards */
+.datetime-container {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.datetime-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: var(--card-border-radius);
+  padding: 2rem;
+  box-shadow: var(--card-shadow);
+  flex: 1;
+  min-width: 250px;
+  max-width: 300px;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.datetime-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.card-label {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.date-display {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.time-display {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: "Space Grotesk", monospace;
+  letter-spacing: -1px;
+}
+
+/* Progress Section */
+.progress-container {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: var(--card-border-radius);
+  padding: 2.5rem;
+  box-shadow: var(--card-shadow);
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.progress-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.progress-percent {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.progress-bar-container {
+  height: 20px;
+  background: var(--progress-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--progress-fill);
+  border-radius: 10px;
+  width: 0%;
+  transition: width 0.8s var(--transition-timing);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 1.3rem;
+  color: var(--primary);
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+.progress-text #percentTextInline {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Progress Stats */
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stat {
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--accent);
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 0.3rem;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 3rem;
+  color: var(--secondary);
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+
+  .theme-toggle {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .toggle-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+
+  .datetime-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .datetime-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .time-display {
+    font-size: 2.5rem;
+  }
+
+  .progress-container {
+    padding: 1.5rem;
+  }
+
+  .progress-percent {
+    font-size: 2rem;
+  }
+
+  .progress-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .date-display {
+    font-size: 1.6rem;
+  }
+
+  .time-display {
+    font-size: 2rem;
+  }
+
+  .progress-percent {
+    font-size: 1.8rem;
+  }
+}
