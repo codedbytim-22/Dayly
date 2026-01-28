@@ -161,6 +161,103 @@ function updateDateTime() {
   currentYear.textContent = year;
 }
 
+// Background Animation System
+function createBackgroundAnimations() {
+  // Remove existing animation container if it exists
+  const existingContainer = document.querySelector(".background-animations");
+  if (existingContainer) {
+    existingContainer.remove();
+  }
+
+  // Create new animation container
+  const animationsContainer = document.createElement("div");
+  animationsContainer.className = "background-animations";
+  document.body.appendChild(animationsContainer);
+
+  function createParticles() {
+    const isLightMode = document.body.classList.contains("light-mode");
+    const container = document.querySelector(".background-animations");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    // Use fewer particles for better performance
+    const count = window.innerWidth < 768 ? 15 : isLightMode ? 25 : 35;
+    const type = isLightMode ? "particle" : "star";
+
+    for (let i = 0; i < count; i++) {
+      const element = document.createElement("div");
+      const size = isLightMode
+        ? Math.random() * 4 + 2 // Larger particles for light mode
+        : Math.random() * 3 + 1; // Smaller stars for dark mode
+
+      element.className = isLightMode ? "particle" : "star";
+      element.style.width = `${size}px`;
+      element.style.height = `${size}px`;
+      element.style.left = `${Math.random() * 100}%`;
+      element.style.top = `${Math.random() * 100}%`;
+
+      if (isLightMode) {
+        // Light mode particles - soft pastel colors
+        const colors = [
+          "rgba(147, 197, 253, 0.3)", // soft blue
+          "rgba(192, 132, 252, 0.25)", // soft purple
+          "rgba(253, 230, 138, 0.2)", // soft yellow
+        ];
+        element.style.setProperty(
+          "--particle-color",
+          colors[Math.floor(Math.random() * colors.length)],
+        );
+        element.style.setProperty("--move-x", `${Math.random() * 60 - 30}px`);
+        element.style.setProperty("--move-y", `${Math.random() * 60 - 30}px`);
+        element.style.setProperty("--duration", `${Math.random() * 40 + 30}s`);
+        element.style.setProperty("--delay", `${Math.random() * 15}s`);
+        element.style.setProperty("--opacity", Math.random() * 0.4 + 0.2);
+      } else {
+        // Dark mode stars - glowing colors
+        const colors = [
+          "rgba(96, 165, 250, 0.6)", // blue glow
+          "rgba(124, 58, 237, 0.5)", // purple glow
+          "rgba(248, 250, 252, 0.4)", // white glow
+        ];
+        element.style.setProperty(
+          "--star-color",
+          colors[Math.floor(Math.random() * colors.length)],
+        );
+        element.style.setProperty("--duration", `${Math.random() * 25 + 15}s`);
+        element.style.setProperty("--delay", `${Math.random() * 10}s`);
+        element.style.setProperty("--size", `${size * 4}px`);
+      }
+
+      container.appendChild(element);
+    }
+  }
+
+  // Initial creation
+  createParticles();
+
+  // Recreate on theme change
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === "class") {
+        setTimeout(createParticles, 500); // Wait for transition to complete
+      }
+    });
+  });
+
+  observer.observe(document.body, { attributes: true });
+
+  // Adjust on resize
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(createParticles, 250);
+  });
+
+  // Recreate periodically to keep fresh
+  setInterval(createParticles, 60000); // Every minute
+}
+
 // Initialize the app
 function initApp() {
   // Initialize theme
@@ -170,9 +267,11 @@ function initApp() {
   themeToggle.addEventListener("click", toggleTheme);
 
   // Create sun rays and stars containers
-  // (Already created in HTML, but ensure they're empty initially)
   sunRays.innerHTML = "";
   starsContainer.innerHTML = "";
+
+  // Initialize background animations
+  createBackgroundAnimations();
 
   // Initial update
   updateDateTime();
@@ -183,3 +282,22 @@ function initApp() {
 
 // Start the app when DOM is loaded
 document.addEventListener("DOMContentLoaded", initApp);
+
+// Add performance optimization for animations
+let lastTime = 0;
+function optimizeAnimations() {
+  const now = performance.now();
+  if (now - lastTime > 1000) {
+    const particles = document.querySelectorAll(".particle, .star");
+    particles.forEach((particle) => {
+      const isInViewport =
+        particle.getBoundingClientRect().top < window.innerHeight;
+      particle.style.animationPlayState = isInViewport ? "running" : "paused";
+    });
+    lastTime = now;
+  }
+  requestAnimationFrame(optimizeAnimations);
+}
+
+// Start animation optimization
+requestAnimationFrame(optimizeAnimations);
