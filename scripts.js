@@ -1,463 +1,906 @@
-// DOM Elements
-const dateDisplay = document.getElementById("dateDisplay");
-const timeDisplay = document.getElementById("timeDisplay");
-const progressBar = document.getElementById("progressBar");
-const percentText = document.getElementById("percentText");
-const percentTextInline = document.getElementById("percentTextInline");
-const yearText = document.getElementById("yearText");
-const daysPassed = document.getElementById("daysPassed");
-const daysRemaining = document.getElementById("daysRemaining");
-const totalDays = document.getElementById("totalDays");
-const currentYear = document.getElementById("currentYear");
-const themeToggle = document.getElementById("themeToggle");
-const sunRays = document.getElementById("sunRays");
-const starsContainer = document.getElementById("starsContainer");
-
-// Theme Management
-let isDarkMode = true;
-
-// Initialize theme from localStorage or default to dark
-function initTheme() {
-  const savedTheme = localStorage.getItem("yearProgressTheme");
-  if (savedTheme === "light") {
-    setLightMode();
-  } else {
-    setDarkMode();
-  }
-}
-
-function setLightMode() {
-  document.body.classList.remove("dark-mode");
-  document.body.classList.add("light-mode");
-  isDarkMode = false;
-  localStorage.setItem("yearProgressTheme", "light");
-  document.dispatchEvent(new CustomEvent("themeChanged", { detail: "light" }));
-}
-
-function setDarkMode() {
-  document.body.classList.remove("light-mode");
-  document.body.classList.add("dark-mode");
-  isDarkMode = true;
-  localStorage.setItem("yearProgressTheme", "dark");
-  document.dispatchEvent(new CustomEvent("themeChanged", { detail: "dark" }));
-}
-
-function toggleTheme() {
-  if (isDarkMode) {
-    setLightMode();
-    triggerSunAnimation();
-  } else {
-    setDarkMode();
-    triggerMoonStarsAnimation();
-  }
-}
-
-// Enhanced Sun Animation
-function triggerSunAnimation() {
-  sunRays.innerHTML = "";
-
-  // Create 12 rays for more dynamic effect
-  for (let i = 0; i < 12; i++) {
-    const ray = document.createElement("div");
-    ray.className = "sun-ray";
-    const delay = i * 0.1;
-    const length = 15 + Math.random() * 10;
-
-    ray.style.cssText = `
-      --length: ${length}px;
-      --rot: ${i * 30}deg;
-      --delay: ${delay}s;
-    `;
-
-    sunRays.appendChild(ray);
-  }
-
-  // Add glow effect
-  const glow = document.createElement("div");
-  glow.className = "sun-glow";
-  sunRays.appendChild(glow);
-
-  sunRays.classList.add("sun-animation");
-  setTimeout(() => {
-    sunRays.classList.remove("sun-animation");
-  }, 1500);
-}
-
-// Enhanced Moon Stars Animation
-function triggerMoonStarsAnimation() {
-  starsContainer.innerHTML = "";
-
-  // Create 20 stars with varied timing
-  for (let i = 0; i < 20; i++) {
-    const star = document.createElement("div");
-    star.className = "star";
-
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 15 + Math.random() * 40;
-    const tx = Math.cos(angle) * distance;
-    const ty = Math.sin(angle) * distance;
-    const delay = Math.random() * 0.5;
-    const size = 2 + Math.random() * 3;
-    const duration = 1 + Math.random() * 1.5;
-
-    // Create unique animation for each star
-    const animationName = `starEmit${i}`;
-    const keyframes = `
-      @keyframes ${animationName} {
-        0% { 
-          transform: translate(-50%, -50%) scale(0); 
-          opacity: 0;
-        }
-        20% { 
-          transform: translate(calc(-50% + ${tx * 0.3}px), calc(-50% + ${ty * 0.3}px)) scale(1.5); 
-          opacity: 1;
-        }
-        40% { 
-          transform: translate(calc(-50% + ${tx * 0.7}px), calc(-50% + ${ty * 0.7}px)) scale(1); 
-          opacity: 0.7;
-        }
-        70% { 
-          transform: translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0.8); 
-          opacity: 0.3;
-        }
-        100% { 
-          transform: translate(calc(-50% + ${tx * 1.2}px), calc(-50% + ${ty * 1.2}px)) scale(0.5); 
-          opacity: 0;
-        }
-      }
-    `;
-
-    // Add the keyframes to the document
-    const style = document.createElement("style");
-    style.textContent = keyframes;
-    document.head.appendChild(style);
-
-    star.style.cssText = `
-      position: absolute;
-      width: ${size}px;
-      height: ${size}px;
-      background: white;
-      border-radius: 50%;
-      left: 50%;
-      top: 50%;
-      box-shadow: 0 0 ${size * 2}px white;
-      opacity: 0;
-      animation: ${animationName} ${duration}s ease-out ${delay}s forwards;
-    `;
-
-    starsContainer.appendChild(star);
-
-    // Clean up the style element after animation
-    setTimeout(
-      () => {
-        if (style.parentNode) {
-          style.parentNode.removeChild(style);
-        }
-      },
-      (duration + delay) * 1000,
-    );
-  }
-
-  // Add moon glow
-  const moonGlow = document.createElement("div");
-  moonGlow.className = "moon-glow";
-  starsContainer.appendChild(moonGlow);
-
-  starsContainer.classList.add("moon-stars-animation");
-  setTimeout(() => {
-    starsContainer.classList.remove("moon-stars-animation");
-  }, 2000);
-}
-
-// Particle System Class
-class ParticleSystem {
+// Main Application
+class DailyApp {
   constructor() {
-    this.particles = [];
-    this.container = null;
-    this.isActive = true;
-    this.particleCount = window.innerWidth < 768 ? 15 : 25;
-    this.animationId = null;
+    this.state = {
+      streak: {
+        current: 0,
+        best: 0,
+        totalCheckins: 0,
+        history: {},
+        lastCheckin: null,
+      },
+      goals: [],
+      theme: "light",
+      isOnline: navigator.onLine,
+      lastMidnightCheck: null,
+      currentGreeting: "",
+    };
 
     this.init();
   }
 
   init() {
-    this.createContainer();
-    this.generateParticles();
-    this.startAnimation();
+    console.log("Daily App Initializing...");
 
-    // Toggle with theme
-    document.addEventListener("themeChanged", () => {
-      this.resetParticles();
-    });
+    // Set current year
+    document.getElementById("current-year").textContent =
+      new Date().getFullYear();
+
+    // Load saved state
+    this.loadState();
+
+    // Initialize all modules
+    this.initDateTime();
+    this.initProgress();
+    this.initStreak();
+    this.initGoals();
+    this.initTheme();
+    this.initEventListeners();
+
+    // Start real-time updates
+    this.startRealTimeUpdates();
+
+    // Check for midnight updates
+    this.checkMidnightUpdate();
+
+    // Update greeting immediately
+    this.updateGreeting();
+
+    console.log("Daily App Initialized");
   }
 
-  createContainer() {
-    this.container = document.createElement("div");
-    this.container.className = "particle-system";
-    document.body.appendChild(this.container);
+  // Load state from localStorage
+  loadState() {
+    try {
+      const savedState = localStorage.getItem("daily_state");
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        this.state.streak = { ...this.state.streak, ...parsed.streak };
+        this.state.lastMidnightCheck = parsed.lastMidnightCheck;
+      }
+
+      const savedGoals = localStorage.getItem("daily_goals");
+      if (savedGoals) {
+        this.state.goals = JSON.parse(savedGoals);
+      }
+
+      const savedTheme = localStorage.getItem("daily_theme");
+      if (savedTheme) {
+        this.state.theme = savedTheme;
+      }
+    } catch (e) {
+      console.error("Error loading saved state:", e);
+      this.state.streak = {
+        current: 0,
+        best: 0,
+        totalCheckins: 0,
+        history: {},
+        lastCheckin: null,
+      };
+      this.state.goals = [];
+    }
   }
 
-  generateParticles() {
-    this.clearParticles();
+  // Save state to localStorage
+  saveState() {
+    try {
+      const stateToSave = {
+        streak: this.state.streak,
+        lastMidnightCheck: this.state.lastMidnightCheck,
+      };
+      localStorage.setItem("daily_state", JSON.stringify(stateToSave));
+      localStorage.setItem("daily_goals", JSON.stringify(this.state.goals));
+    } catch (e) {
+      console.error("Error saving state:", e);
+    }
+  }
 
-    const isLight = document.body.classList.contains("light-mode");
-    const colors = isLight
-      ? [
-          "rgba(147, 197, 253, 0.3)",
-          "rgba(192, 132, 252, 0.25)",
-          "rgba(253, 230, 138, 0.2)",
-        ]
-      : [
-          "rgba(96, 165, 250, 0.4)",
-          "rgba(124, 58, 237, 0.3)",
-          "rgba(248, 250, 252, 0.25)",
-        ];
+  // Update time-based greeting
+  updateGreeting() {
+    const now = new Date();
+    const hour = now.getHours();
+    let greeting = "";
+    let greetingClass = "";
 
-    for (let i = 0; i < this.particleCount; i++) {
-      const particle = document.createElement("div");
-      const size = Math.random() * 4 + 2;
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      const duration = Math.random() * 30 + 20;
-      const delay = Math.random() * 10;
+    if (hour >= 5 && hour < 12) {
+      greeting = "Good morning";
+      greetingClass = "morning";
+    } else if (hour >= 12 && hour < 17) {
+      greeting = "Good afternoon";
+      greetingClass = "afternoon";
+    } else if (hour >= 17 && hour < 21) {
+      greeting = "Good evening";
+      greetingClass = "evening";
+    } else {
+      greeting = "Good night";
+      greetingClass = "night";
+    }
 
-      particle.className = isLight ? "particle" : "star";
-      particle.style.cssText = `
-        width: ${size}px;
-        height: ${size}px;
-        left: ${x}%;
-        top: ${y}%;
-        --duration: ${duration}s;
-        --delay: ${delay}s;
-      `;
+    const emojis = {
+      morning: "🌅",
+      afternoon: "☀️",
+      evening: "🌆",
+      night: "🌙",
+    };
 
-      if (isLight) {
-        particle.style.setProperty(
-          "--particle-color",
-          colors[Math.floor(Math.random() * colors.length)],
+    const greetingElement = document.getElementById("greeting");
+    if (greetingElement) {
+      greetingElement.textContent = `${greeting} ${emojis[greetingClass] || ""}`;
+      greetingElement.className = `greeting ${greetingClass}`;
+    }
+
+    this.state.currentGreeting = greeting;
+  }
+
+  // Update date and time in real-time
+  updateDateTime() {
+    const now = new Date();
+
+    // Update greeting if hour has changed
+    const currentHour = now.getHours();
+    if (currentHour !== this.lastCheckedHour) {
+      this.updateGreeting();
+      this.lastCheckedHour = currentHour;
+    }
+
+    // Format date
+    const dateOptions = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    const dateString = now.toLocaleDateString("en-US", dateOptions);
+    document.getElementById("date-display").textContent = dateString;
+
+    // Format time
+    const hours = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    const seconds = now.getSeconds().toString().padStart(2, "0");
+    const timeString = `${hours}:${minutes}:${seconds}`;
+    document.getElementById("time-display").textContent = timeString;
+
+    // Calculate week number
+    const weekNumber = this.getWeekNumber(now);
+    document.getElementById("week-display").textContent = `Week ${weekNumber}`;
+  }
+
+  // Get ISO week number
+  getWeekNumber(date) {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+
+    target.setDate(target.getDate() - dayNr + 3);
+
+    const firstThursday = target.valueOf();
+
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    }
+
+    return 1 + Math.ceil((firstThursday - target) / 604800000);
+  }
+
+  // Update progress calculations
+  updateProgress() {
+    const now = new Date();
+
+    // Year progress
+    const yearProgress = this.calculateYearProgress(now);
+    const currentYear = now.getFullYear();
+    document.getElementById("year-title").textContent =
+      `${currentYear} is ${yearProgress.percentage.toFixed(1)}% complete`;
+    document.getElementById("year-percentage").textContent =
+      `${yearProgress.percentage.toFixed(1)}%`;
+    document.getElementById("year-progress-bar").style.width =
+      `${yearProgress.percentage}%`;
+    document.getElementById("year-days-passed").textContent =
+      `${yearProgress.passed} ${yearProgress.passed === 1 ? "day" : "days"} passed`;
+    document.getElementById("year-days-remaining").textContent =
+      `${yearProgress.remaining} ${yearProgress.remaining === 1 ? "day" : "days"} remaining`;
+
+    // Month progress
+    const monthProgress = this.calculateMonthProgress(now);
+    const monthName = now.toLocaleDateString("en-US", { month: "long" });
+    document.getElementById("month-title").textContent =
+      `${monthName} is ${monthProgress.percentage.toFixed(1)}% complete`;
+    document.getElementById("month-percentage").textContent =
+      `${monthProgress.percentage.toFixed(1)}%`;
+    document.getElementById("month-progress-bar").style.width =
+      `${monthProgress.percentage}%`;
+    document.getElementById("month-days-passed").textContent =
+      `${monthProgress.passed} ${monthProgress.passed === 1 ? "day" : "days"} passed`;
+    document.getElementById("month-days-remaining").textContent =
+      `${monthProgress.remaining} ${monthProgress.remaining === 1 ? "day" : "days"} remaining`;
+  }
+
+  // Calculate year progress
+  calculateYearProgress(date) {
+    const year = date.getFullYear();
+    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const totalDays = isLeapYear ? 366 : 365;
+
+    const yearStart = new Date(year, 0, 1);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diffMs = date - yearStart;
+    const passedDays = Math.floor(diffMs / msPerDay) + 1;
+    const remainingDays = totalDays - passedDays;
+    const percentage = (passedDays / totalDays) * 100;
+
+    return {
+      passed: passedDays,
+      remaining: Math.max(0, remainingDays),
+      total: totalDays,
+      percentage: Math.min(100, Math.max(0, percentage)),
+    };
+  }
+
+  // Calculate month progress
+  calculateMonthProgress(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const monthStart = new Date(year, month, 1);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diffMs = date - monthStart;
+    const passedDays = Math.floor(diffMs / msPerDay) + 1;
+    const remainingDays = totalDays - passedDays;
+    const percentage = (passedDays / totalDays) * 100;
+
+    return {
+      passed: passedDays,
+      remaining: Math.max(0, remainingDays),
+      total: totalDays,
+      percentage: Math.min(100, Math.max(0, percentage)),
+    };
+  }
+
+  // Handle daily check-in
+  handleCheckIn() {
+    const today = this.getTodayString();
+
+    if (this.state.streak.history[today]) {
+      this.showToast("You have already checked in today!", "info");
+      return;
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = this.formatDateString(yesterday);
+
+    if (this.state.streak.history[yesterdayStr]) {
+      this.state.streak.current++;
+    } else {
+      const lastCheckin = this.state.streak.lastCheckin
+        ? new Date(this.state.streak.lastCheckin)
+        : null;
+      if (lastCheckin) {
+        const daysSinceLastCheckin = Math.floor(
+          (new Date(today) - lastCheckin) / (1000 * 60 * 60 * 24),
         );
-        particle.style.setProperty("--move-x", `${Math.random() * 60 - 30}px`);
-        particle.style.setProperty("--move-y", `${Math.random() * 60 - 30}px`);
-        particle.style.setProperty("--opacity", Math.random() * 0.4 + 0.2);
-        particle.style.setProperty("--blur", "2px");
+        if (daysSinceLastCheckin > 1) {
+          this.state.streak.current = 1;
+        } else {
+          this.state.streak.current++;
+        }
       } else {
-        particle.style.setProperty(
-          "--star-color",
-          colors[Math.floor(Math.random() * colors.length)],
-        );
-        particle.style.setProperty("--size", `${size * 4}px`);
+        this.state.streak.current = 1;
+      }
+    }
+
+    this.state.streak.history[today] = true;
+    this.state.streak.lastCheckin = today;
+    this.state.streak.totalCheckins++;
+
+    if (this.state.streak.current > this.state.streak.best) {
+      this.state.streak.best = this.state.streak.current;
+    }
+
+    this.saveState();
+    this.updateStreakDisplay();
+    this.updateGoalCheckins();
+
+    const checkInBtn = document.getElementById("check-in-btn");
+    checkInBtn.innerHTML = '<i class="fas fa-check-circle"></i> Checked In';
+    checkInBtn.classList.add("checked-in");
+    checkInBtn.disabled = true;
+
+    this.showToast(
+      `Daily check-in recorded! Streak: ${this.state.streak.current} days`,
+      "success",
+    );
+  }
+
+  // Show toast notification
+  showToast(message, type = "info") {
+    const existingToast = document.querySelector(".toast");
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translate(-50%, -100%);
+          opacity: 0;
+        }
+        to {
+          transform: translate(-50%, 0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.3s";
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // Check if user has already checked in today
+  checkIfCheckedInToday() {
+    const today = this.getTodayString();
+    const checkInBtn = document.getElementById("check-in-btn");
+
+    if (this.state.streak.history[today]) {
+      checkInBtn.innerHTML = '<i class="fas fa-check-circle"></i> Checked In';
+      checkInBtn.classList.add("checked-in");
+      checkInBtn.disabled = true;
+    } else {
+      checkInBtn.disabled = false;
+      checkInBtn.classList.remove("checked-in");
+      checkInBtn.innerHTML = '<i class="fas fa-check"></i> Check In';
+    }
+  }
+
+  // Update streak display
+  updateStreakDisplay() {
+    document.getElementById("streak-display").textContent =
+      this.state.streak.current;
+    document.getElementById("current-streak").textContent =
+      this.state.streak.current;
+    document.getElementById("best-streak").textContent = this.state.streak.best;
+    document.getElementById("total-checkins").textContent =
+      this.state.streak.totalCheckins;
+
+    this.updateStreakGrid();
+  }
+
+  // Update streak grid visualization
+  updateStreakGrid() {
+    const grid = document.getElementById("streak-grid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    const today = new Date();
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateString = this.formatDateString(date);
+
+      const dayElement = document.createElement("div");
+      dayElement.className = "streak-day";
+
+      if (this.state.streak.history[dateString]) {
+        dayElement.classList.add("active");
       }
 
-      this.container.appendChild(particle);
-      this.particles.push(particle);
+      if (i === 0) {
+        dayElement.classList.add("today");
+      }
+
+      const label = document.createElement("div");
+      label.className = "streak-day-label";
+      label.textContent = daysOfWeek[date.getDay()];
+      dayElement.appendChild(label);
+
+      grid.appendChild(dayElement);
     }
   }
 
-  clearParticles() {
-    if (this.container) {
-      this.container.innerHTML = "";
-    }
-    this.particles = [];
-  }
+  // Update goal check-ins
+  updateGoalCheckins() {
+    const today = this.getTodayString();
 
-  resetParticles() {
-    this.clearParticles();
-    this.generateParticles();
-  }
+    this.state.goals.forEach((goal) => {
+      if (!goal.completed) {
+        goal.history[today] = true;
+        goal.currentStreak = this.calculateGoalStreak(goal);
 
-  startAnimation() {
-    if ("requestAnimationFrame" in window) {
-      this.animate();
-    }
-  }
-
-  animate() {
-    if (!this.isActive) return;
-
-    // Subtle continuous movement for particles
-    this.particles.forEach((particle, i) => {
-      if (particle.className === "particle") {
-        const time = Date.now() / 10000;
-        const x = Math.sin(time + i) * 1;
-        const y = Math.cos(time + i) * 1;
-        const currentTransform =
-          particle.style.transform || "translate(0px, 0px)";
-        particle.style.transform = `translate(${x}px, ${y}px) ${currentTransform.replace(/translate\([^)]+\)/, "")}`;
+        if (goal.currentStreak >= goal.duration) {
+          goal.completed = true;
+          goal.completedAt = new Date().toISOString();
+        }
       }
     });
 
-    this.animationId = requestAnimationFrame(() => this.animate());
+    this.saveState();
+    this.renderGoals();
   }
 
-  destroy() {
-    this.isActive = false;
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
+  // Calculate goal streak
+  calculateGoalStreak(goal) {
+    const history = goal.history;
+    let streak = 0;
+    let date = new Date();
+
+    while (true) {
+      const dateString = this.formatDateString(date);
+
+      if (history[dateString]) {
+        streak++;
+        date.setDate(date.getDate() - 1);
+      } else {
+        break;
+      }
     }
-    this.clearParticles();
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
+
+    return streak;
+  }
+
+  // Toggle goal modal
+  toggleModal(show) {
+    const modal = document.getElementById("goal-modal");
+    modal.style.display = show ? "flex" : "none";
+
+    if (show) {
+      setTimeout(() => {
+        document.getElementById("goal-name").focus();
+      }, 100);
+    } else {
+      document.getElementById("goal-form").reset();
     }
   }
-}
 
-// Date and Progress Calculations
-function isLeapYear(year) {
-  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-}
+  // Handle adding a new goal
+  handleAddGoal(e) {
+    e.preventDefault();
 
-function getDayOfYear(date) {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff = date - start;
-  const oneDay = 1000 * 60 * 60 * 24;
-  return Math.floor(diff / oneDay);
-}
+    const name = document.getElementById("goal-name").value.trim();
+    const duration = parseInt(document.getElementById("goal-duration").value);
 
-function getTotalDaysInYear(year) {
-  return isLeapYear(year) ? 366 : 365;
-}
+    if (!name) {
+      this.showToast("Please enter a goal name", "warning");
+      return;
+    }
 
-function formatDate(date) {
-  const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  return date.toLocaleDateString("en-US", options);
-}
+    if (duration < 1 || duration > 365) {
+      this.showToast("Duration must be between 1 and 365 days", "warning");
+      return;
+    }
 
-function formatTime(date) {
-  return date.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
+    const newGoal = {
+      id: Date.now(),
+      name,
+      duration,
+      history: {},
+      currentStreak: 0,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
 
-function updateDateTime() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const dayOfYear = getDayOfYear(now);
-  const totalDaysInYear = getTotalDaysInYear(year);
-  const progress = (dayOfYear / totalDaysInYear) * 100;
+    this.state.goals.push(newGoal);
+    this.saveState();
+    this.renderGoals();
+    this.toggleModal(false);
 
-  // Update date and time
-  dateDisplay.textContent = formatDate(now);
-  timeDisplay.textContent = formatTime(now);
+    this.showToast("Goal added successfully!", "success");
+  }
 
-  // Update progress bar
-  progressBar.style.width = `${progress}%`;
+  // Render goals
+  renderGoals() {
+    const container = document.getElementById("goals-list");
+    if (!container) return;
 
-  // Update percentage text
-  const progressFixed = progress.toFixed(2);
-  percentText.textContent = `${progressFixed}%`;
-  percentTextInline.textContent = `${progressFixed}%`;
+    container.innerHTML = "";
 
-  // Update year text
-  yearText.textContent = year;
+    if (this.state.goals.length === 0) {
+      container.innerHTML = `
+        <div class="goal-item">
+          <div class="goal-info">
+            <h3>No goals yet</h3>
+            <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+              Click "Add Goal" to create your first goal!
+            </p>
+          </div>
+        </div>
+      `;
+      return;
+    }
 
-  // Update stats
-  daysPassed.textContent = dayOfYear;
-  daysRemaining.textContent = totalDaysInYear - dayOfYear;
-  totalDays.textContent = totalDaysInYear;
+    const sortedGoals = [...this.state.goals].sort((a, b) => {
+      if (a.completed && !b.completed) return 1;
+      if (!a.completed && b.completed) return -1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
-  // Update footer year
-  currentYear.textContent = year;
+    sortedGoals.forEach((goal) => {
+      const goalElement = this.createGoalElement(goal);
+      container.appendChild(goalElement);
+    });
+  }
+
+  // Create goal element
+  createGoalElement(goal) {
+    const element = document.createElement("div");
+    element.className = `goal-item ${goal.completed ? "goal-complete" : ""}`;
+
+    const percentage = Math.min(
+      100,
+      (goal.currentStreak / goal.duration) * 100,
+    );
+    const today = this.getTodayString();
+
+    element.innerHTML = `
+      <div class="goal-header">
+        <div class="goal-info">
+          <h3>${goal.name}</h3>
+          <div class="goal-meta">
+            <span class="goal-type">${goal.duration} days</span>
+            <span>${goal.currentStreak}/${goal.duration} days</span>
+            <span>${percentage.toFixed(0)}% complete</span>
+          </div>
+        </div>
+        <button class="goal-check-in-btn" data-id="${goal.id}" 
+                ${goal.completed || goal.history[today] ? "disabled" : ""}>
+          <i class="fas fa-${goal.history[today] ? "check-circle" : "check"}"></i>
+          ${goal.history[today] ? "Checked In" : "Check In"}
+        </button>
+      </div>
+      
+      <div class="goal-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${percentage}%"></div>
+        </div>
+      </div>
+      
+      <div class="goal-grid" id="goal-grid-${goal.id}">
+        <!-- Goal days will be dynamically added -->
+      </div>
+      
+      <div class="goal-stats">
+        <span>Current Streak: <strong>${goal.currentStreak}</strong> days</span>
+        <span>Started: ${new Date(goal.createdAt).toLocaleDateString()}</span>
+      </div>
+      
+      ${
+        !goal.completed
+          ? `
+      <div class="goal-actions">
+        <button class="goal-btn delete" data-id="${goal.id}" data-action="delete">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>
+      `
+          : `
+      <div style="color: var(--success); font-weight: 600; margin-top: 1rem;">
+        <i class="fas fa-trophy"></i> Completed on ${new Date(goal.completedAt).toLocaleDateString()}
+      </div>
+      `
+      }
+    `;
+
+    const checkInBtn = element.querySelector(".goal-check-in-btn");
+    const deleteBtn = element.querySelector(".goal-btn.delete");
+
+    if (checkInBtn) {
+      checkInBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.handleGoalCheckIn(goal.id);
+      });
+    }
+
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.deleteGoal(goal.id);
+      });
+    }
+
+    this.renderGoalGrid(goal);
+
+    if (goal.history[today]) {
+      checkInBtn.classList.add("checked-in");
+    }
+
+    return element;
+  }
+
+  // Handle goal check-in
+  handleGoalCheckIn(goalId) {
+    const goal = this.state.goals.find((g) => g.id === goalId);
+    if (!goal || goal.completed) return;
+
+    const today = this.getTodayString();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = this.formatDateString(yesterday);
+
+    if (goal.history[today]) {
+      this.showToast("Already checked in for this goal today!", "info");
+      return;
+    }
+
+    if (goal.history[yesterdayStr]) {
+      goal.currentStreak++;
+    } else {
+      const lastCheckinDate = Object.keys(goal.history)
+        .filter((date) => goal.history[date])
+        .sort()
+        .pop();
+
+      if (lastCheckinDate) {
+        const lastCheckin = new Date(lastCheckinDate);
+        const daysSinceLast = Math.floor(
+          (new Date(today) - lastCheckin) / (1000 * 60 * 60 * 24),
+        );
+
+        if (daysSinceLast === 1) {
+          goal.currentStreak++;
+        } else if (daysSinceLast > 1) {
+          goal.currentStreak = 1;
+        }
+      } else {
+        goal.currentStreak = 1;
+      }
+    }
+
+    goal.history[today] = true;
+
+    if (goal.currentStreak >= goal.duration) {
+      goal.completed = true;
+      goal.completedAt = new Date().toISOString();
+      this.showToast(`🎉 Goal completed: ${goal.name}!`, "success");
+    } else {
+      this.showToast(
+        `Goal check-in recorded! Current streak: ${goal.currentStreak} days`,
+        "success",
+      );
+    }
+
+    this.saveState();
+    this.renderGoals();
+  }
+
+  // Render goal grid visualization
+  renderGoalGrid(goal) {
+    const grid = document.getElementById(`goal-grid-${goal.id}`);
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    const today = new Date();
+    const startDate = new Date(goal.createdAt);
+    const isMobile = window.innerWidth < 768;
+    const daysToShow = isMobile
+      ? Math.min(goal.duration, 20)
+      : Math.min(goal.duration, 30);
+
+    for (let i = daysToShow - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+
+      if (date < startDate) continue;
+
+      const dateString = this.formatDateString(date);
+
+      const dayElement = document.createElement("div");
+      dayElement.className = "goal-day";
+
+      if (goal.history[dateString]) {
+        dayElement.classList.add("checked");
+      } else if (date < today) {
+        dayElement.classList.add("missed");
+      }
+
+      if (i === 0) {
+        dayElement.classList.add("today");
+      }
+
+      grid.appendChild(dayElement);
+    }
+  }
+
+  // Delete goal
+  deleteGoal(goalId) {
+    if (
+      confirm(
+        "Are you sure you want to delete this goal? All progress will be lost.",
+      )
+    ) {
+      this.state.goals = this.state.goals.filter((g) => g.id !== goalId);
+      this.saveState();
+      this.renderGoals();
+      this.showToast("Goal deleted", "info");
+    }
+  }
+
+  // Toggle theme
+  toggleTheme() {
+    this.state.theme = this.state.theme === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", this.state.theme);
+    localStorage.setItem("daily_theme", this.state.theme);
+    this.updateThemeIcon();
+  }
+
+  // Update theme icon
+  updateThemeIcon() {
+    const icon = document.querySelector("#theme-toggle i");
+    if (this.state.theme === "light") {
+      icon.className = "fas fa-moon";
+      icon.setAttribute("aria-label", "Switch to dark mode");
+    } else {
+      icon.className = "fas fa-sun";
+      icon.setAttribute("aria-label", "Switch to light mode");
+    }
+  }
+
+  // Update online status
+  updateOnlineStatus() {
+    this.state.isOnline = navigator.onLine;
+    const indicator = document.getElementById("offline-indicator");
+    indicator.style.display = this.state.isOnline ? "none" : "flex";
+
+    if (!this.state.isOnline) {
+      this.showToast(
+        "You are offline. Changes will be saved locally.",
+        "warning",
+      );
+    }
+  }
+
+  // Start real-time updates
+  startRealTimeUpdates() {
+    setInterval(() => this.updateDateTime(), 1000);
+    setInterval(() => this.updateProgress(), 60000);
+    setInterval(() => this.checkMidnightUpdate(), 60000);
+    setInterval(() => this.updateGreeting(), 3600000);
+  }
+
+  // Check for midnight update
+  checkMidnightUpdate() {
+    const now = new Date();
+    const today = this.getTodayString();
+
+    if (this.state.lastMidnightCheck === today) return;
+
+    if (now.getHours() === 0 && now.getMinutes() < 5) {
+      this.handleNewDay();
+      this.state.lastMidnightCheck = today;
+      this.saveState();
+    }
+  }
+
+  // Handle new day
+  handleNewDay() {
+    console.log("New day detected, checking streaks...");
+
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = this.formatDateString(yesterday);
+    const todayStr = this.getTodayString();
+
+    if (
+      !this.state.streak.history[yesterdayStr] &&
+      this.state.streak.current > 0
+    ) {
+      this.state.streak.current = 0;
+    }
+
+    const checkInBtn = document.getElementById("check-in-btn");
+    if (!this.state.streak.history[todayStr]) {
+      checkInBtn.innerHTML = '<i class="fas fa-check"></i> Check In';
+      checkInBtn.classList.remove("checked-in");
+      checkInBtn.disabled = false;
+    }
+
+    this.state.goals.forEach((goal) => {
+      if (!goal.completed && !goal.history[yesterdayStr]) {
+        goal.currentStreak = 0;
+      }
+    });
+
+    this.saveState();
+    this.updateStreakDisplay();
+    this.renderGoals();
+
+    this.showToast("New day! Time to check in!", "info");
+  }
+
+  // Initialize event listeners
+  initEventListeners() {
+    document
+      .getElementById("theme-toggle")
+      .addEventListener("click", () => this.toggleTheme());
+    document
+      .getElementById("check-in-btn")
+      .addEventListener("click", () => this.handleCheckIn());
+    document
+      .getElementById("add-goal-btn")
+      .addEventListener("click", () => this.toggleModal(true));
+    document
+      .getElementById("close-modal")
+      .addEventListener("click", () => this.toggleModal(false));
+    document
+      .getElementById("cancel-goal")
+      .addEventListener("click", () => this.toggleModal(false));
+    document
+      .getElementById("goal-form")
+      .addEventListener("submit", (e) => this.handleAddGoal(e));
+
+    document.getElementById("goal-modal").addEventListener("click", (e) => {
+      if (e.target.id === "goal-modal") {
+        this.toggleModal(false);
+      }
+    });
+
+    window.addEventListener("online", () => this.updateOnlineStatus());
+    window.addEventListener("offline", () => this.updateOnlineStatus());
+
+    this.checkIfCheckedInToday();
+  }
+
+  // Helper methods
+  getTodayString() {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  }
+
+  formatDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  // Initialize modules
+  initDateTime() {
+    this.updateDateTime();
+    this.updateProgress();
+  }
+
+  initProgress() {
+    this.updateProgress();
+  }
+
+  initStreak() {
+    this.updateStreakDisplay();
+    this.checkIfCheckedInToday();
+  }
+
+  initGoals() {
+    this.renderGoals();
+  }
+
+  initTheme() {
+    document.documentElement.setAttribute("data-theme", this.state.theme);
+    this.updateThemeIcon();
+  }
 }
 
 // Initialize the app
-function initApp() {
-  // Check for reduced motion preference
+document.addEventListener("DOMContentLoaded", () => {
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
-
-  // Initialize theme
-  initTheme();
-
-  // Set up theme toggle
-  themeToggle.addEventListener("click", toggleTheme);
-
-  // Initialize sun rays and stars containers
-  sunRays.innerHTML = "";
-  starsContainer.innerHTML = "";
-
-  // Initialize background animations (only if not reduced motion)
-  if (!prefersReducedMotion) {
-    window.particleSystem = new ParticleSystem();
+  if (prefersReducedMotion) {
+    document.documentElement.style.setProperty("--transition", "none");
   }
 
-  // Initial date/time update
-  updateDateTime();
-
-  // Set up interval for updates
-  setInterval(updateDateTime, 1000);
-
-  // Service worker registration
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("sw.js")
-      .then((registration) => {
-        console.log(
-          "Service Worker registered with scope:",
-          registration.scope,
-        );
-
-        // Check for updates
-        registration.addEventListener("updatefound", () => {
-          const newWorker = registration.installing;
-          console.log("Service Worker update found!");
-
-          newWorker.addEventListener("statechange", () => {
-            if (
-              newWorker.state === "installed" &&
-              navigator.serviceWorker.controller
-            ) {
-              console.log("New content is available; please refresh.");
-              // You could show a notification here
-            }
-          });
-        });
-      })
-      .catch((error) => {
-        console.log("Service Worker registration failed:", error);
-      });
-  }
-
-  // Handle offline/online status
-  window.addEventListener("online", () => {
-    console.log("App is online");
-    document.body.classList.remove("offline");
-  });
-
-  window.addEventListener("offline", () => {
-    console.log("App is offline");
-    document.body.classList.add("offline");
-  });
-
-  // Check initial connection status
-  if (!navigator.onLine) {
-    document.body.classList.add("offline");
-  }
-
-  // Handle visibility changes
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      // Refresh time when tab becomes visible
-      updateDateTime();
-    }
-  });
-}
-
-// Start the app when DOM is loaded
-document.addEventListener("DOMContentLoaded", initApp);
-
-// Handle page unloading
-window.addEventListener("beforeunload", () => {
-  if (window.particleSystem) {
-    window.particleSystem.destroy();
-  }
+  window.dailyApp = new DailyApp();
 });
