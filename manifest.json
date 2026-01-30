@@ -1,12 +1,11 @@
 {
-  "name": "Year Progress Tracker",
-  "short_name": "YearProgress",
-  "description": "Visualize the passage of time with a beautiful year progress tracker",
-  "start_url": "./index.html",
+  "name": "Daily - Time Tracking & Productivity",
+  "short_name": "Daily",
+  "description": "Visualize time, track progress, maintain streaks, and achieve goals",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "orientation": "portrait-primary",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
   "icons": [
     {
       "src": "icon-192.png",

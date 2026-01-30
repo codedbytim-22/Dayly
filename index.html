@@ -2,23 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Year Progress Tracker</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+    />
+    <title>Daily - Time Tracking & Productivity</title>
+    <meta
+      name="description"
+      content="Visualize time, track progress, maintain streaks, and achieve goals"
+    />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+
+    <!-- CSS File -->
     <link rel="stylesheet" href="styles.css" />
+
     <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#0f172a" />
-    <meta
-      name="description"
-      content="Visualize the passage of time with a beautiful year progress tracker"
-    />
   </head>
   <body class="dark-mode">
     <div class="theme-toggle">
@@ -33,29 +44,33 @@
         <i class="fas fa-moon moon-icon"></i>
       </button>
     </div>
+
     <div class="container">
       <header class="header">
         <h1 class="title">Dayly</h1>
         <p class="subtitle">
           Visualize the passage of time with precision and elegance
         </p>
-        <p class="greeting-text" id="greetingText">Hello!</p>
       </header>
 
-      <div class="datetime-container">
-        <div class="datetime-card">
-          <div class="card-label">Current Date</div>
-          <div class="date-display" id="dateDisplay">
-            Tuesday, January 21, 2026
+      <!-- Time Cards Section -->
+      <section class="time-cards">
+        <!-- Date Card -->
+        <div class="time-card">
+          <div class="card-title">
+            <div class="card-icon">
+              <i class="fas fa-calendar-day"></i>
+            </div>
+            <span>Current Date</span>
+          </div>
+          <div class="date-display" id="date-display">
+            Friday, January 30, 2026
           </div>
         </div>
+
         <div class="datetime-card">
           <div class="card-label">Current Time</div>
           <div class="time-display" id="timeDisplay">14:23:45</div>
-        </div>
-        <div class="datetime-card">
-          <div class="card-label">Week Number</div>
-          <div class="week-display" id="weekDisplay">1</div>
         </div>
       </div>
 
@@ -64,59 +79,94 @@
           <h2 class="progress-title">Year Progress</h2>
           <div class="progress-percent" id="percentText">0.00%</div>
         </div>
+
         <div class="progress-bar-container">
           <div class="progress-bar" id="progressBar"></div>
         </div>
-        <!-- FIXED: Change to percentTextInline -->
+
         <div class="progress-text" id="progressText">
           <span id="yearText">2026</span> is
           <span id="percentTextInline">0.00%</span> complete
         </div>
+
         <div class="progress-stats">
           <div class="stat">
             <div class="stat-value" id="daysPassed">0</div>
             <div class="stat-label">Days Passed</div>
           </div>
+
           <div class="stat">
             <div class="stat-value" id="daysRemaining">365</div>
             <div class="stat-label">Days Remaining</div>
           </div>
+
           <div class="stat">
             <div class="stat-value" id="totalDays">365</div>
             <div class="stat-label">Total Days</div>
           </div>
         </div>
-
-        <!-- Month Progress -->
-        <div class="month-progress-container">
-          <div class="progress-header">
-            <h2 class="progress-title">Month Progress</h2>
-            <div class="progress-percent" id="monthPercentText">0.00%</div>
-          </div>
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="monthProgressBar"></div>
-          </div>
-          <!-- ADDED: Month progress text -->
-          <div class="progress-text">
-            <span id="monthNameText">January</span> is
-            <span id="monthPercentInline">0.00%</span> complete
-          </div>
-        </div>
       </main>
 
-      <!-- Goal Tracker Card -->
+      <footer class="footer">
+        <p>
+          Dayly • Amilli labs |
+          <span id="currentYear">2026</span>
+        </p>
+      </footer>
     </div>
 
+    <!-- Add Goal Modal -->
+    <div class="modal" id="goal-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add New Goal</h2>
+          <button class="close-modal" id="close-modal">&times;</button>
+        </div>
+        <form id="goal-form">
+          <div class="form-group">
+            <label for="goal-name" class="form-label">Goal Name</label>
+            <input
+              type="text"
+              id="goal-name"
+              class="form-input"
+              placeholder="e.g., Daily meditation"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="goal-duration" class="form-label"
+              >Duration (days)</label
+            >
+            <input
+              type="number"
+              id="goal-duration"
+              class="form-input"
+              min="1"
+              max="365"
+              value="30"
+              required
+            />
+            <small
+              style="
+                color: var(--text-secondary);
+                display: block;
+                margin-top: 0.25rem;
+              "
+            >
+              How many days do you want to track this goal?
+            </small>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancel-goal">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">Add Goal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- JavaScript File -->
     <script src="scripts.js"></script>
-    <!-- Optional PWA Service Worker -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("sw.js").catch((error) => {
-            console.log("ServiceWorker registration failed:", error);
-          });
-        });
-      }
-    </script>
   </body>
 </html>
