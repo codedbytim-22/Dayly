@@ -35,6 +35,7 @@ class DailyApp {
     this.initStreak();
     this.initGoals();
     this.initTheme();
+    this.initFeedback();
     this.initEventListeners();
 
     // Start real-time updates
@@ -92,6 +93,136 @@ class DailyApp {
       localStorage.setItem("daily_goals", JSON.stringify(this.state.goals));
     } catch (e) {
       console.error("Error saving state:", e);
+    }
+  }
+
+  // Initialize feedback form
+  initFeedback() {
+    this.feedbackForm = document.getElementById("feedback-form");
+    this.feedbackModal = document.getElementById("feedback-modal");
+
+    // Update the email field based on input
+    const emailInput = document.getElementById("feedback-email");
+    const replyToField = document.getElementById("reply-to-field");
+
+    if (emailInput && replyToField) {
+      emailInput.addEventListener("input", () => {
+        replyToField.value = emailInput.value;
+      });
+    }
+  }
+
+  // Toggle feedback modal
+  toggleFeedbackModal(show) {
+    this.feedbackModal.style.display = show ? "flex" : "none";
+
+    if (show) {
+      setTimeout(() => {
+        const nameInput = document.getElementById("feedback-name");
+        if (nameInput) nameInput.focus();
+      }, 100);
+    } else {
+      this.feedbackForm.reset();
+      // Clear any feedback messages
+      const existingMessages =
+        this.feedbackModal.querySelectorAll(".feedback-message");
+      existingMessages.forEach((msg) => msg.remove());
+    }
+  }
+
+  // Handle feedback form submission
+  async handleFeedbackSubmit(e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById("submit-feedback");
+    const originalText = submitBtn.innerHTML;
+
+    // Disable submit button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner"></i> Sending...';
+
+    // Clear any previous messages
+    const existingMessages =
+      this.feedbackModal.querySelectorAll(".feedback-message");
+    existingMessages.forEach((msg) => msg.remove());
+
+    try {
+      const formData = new FormData(this.feedbackForm);
+
+      // Add timestamp and app state to form data
+      const timestamp = new Date().toISOString();
+      formData.append("_timestamp", timestamp);
+      formData.append("_streak", this.state.streak.current);
+      formData.append("_theme", this.state.theme);
+      formData.append("_app_version", "1.0.0");
+
+      // Get app state for debugging
+      const appState = {
+        goals: this.state.goals.length,
+        totalCheckins: this.state.streak.totalCheckins,
+        bestStreak: this.state.streak.best,
+        userAgent: navigator.userAgent,
+        online: navigator.onLine,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+      };
+
+      formData.append("_app_state", JSON.stringify(appState));
+
+      const response = await fetch(this.feedbackForm.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Show success message
+        const successMessage = document.createElement("div");
+        successMessage.className = "feedback-message feedback-success";
+        successMessage.innerHTML = `
+          <i class="fas fa-check-circle"></i>
+          <p>Thank you for your feedback! We'll review it soon.</p>
+        `;
+
+        this.feedbackForm.insertBefore(
+          successMessage,
+          this.feedbackForm.firstChild,
+        );
+
+        // Reset form
+        this.feedbackForm.reset();
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          this.toggleFeedbackModal(false);
+        }, 2000);
+
+        this.showToast("Feedback sent successfully!", "success");
+      } else {
+        throw new Error("Form submission failed");
+      }
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+
+      // Show error message
+      const errorMessage = document.createElement("div");
+      errorMessage.className = "feedback-message feedback-error";
+      errorMessage.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <p>Failed to send feedback. Please try again later or check your connection.</p>
+      `;
+
+      this.feedbackForm.insertBefore(
+        errorMessage,
+        this.feedbackForm.firstChild,
+      );
+
+      this.showToast("Failed to send feedback. Please try again.", "error");
+    } finally {
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
     }
   }
 
@@ -843,9 +974,29 @@ class DailyApp {
       .getElementById("goal-form")
       .addEventListener("submit", (e) => this.handleAddGoal(e));
 
+    // Feedback form event listeners
+    document
+      .getElementById("open-feedback-btn")
+      .addEventListener("click", () => this.toggleFeedbackModal(true));
+    document
+      .getElementById("close-feedback-modal")
+      .addEventListener("click", () => this.toggleFeedbackModal(false));
+    document
+      .getElementById("cancel-feedback")
+      .addEventListener("click", () => this.toggleFeedbackModal(false));
+    document
+      .getElementById("feedback-form")
+      .addEventListener("submit", (e) => this.handleFeedbackSubmit(e));
+
     document.getElementById("goal-modal").addEventListener("click", (e) => {
       if (e.target.id === "goal-modal") {
         this.toggleModal(false);
+      }
+    });
+
+    document.getElementById("feedback-modal").addEventListener("click", (e) => {
+      if (e.target.id === "feedback-modal") {
+        this.toggleFeedbackModal(false);
       }
     });
 
